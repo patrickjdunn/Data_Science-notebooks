@@ -1,145 +1,72 @@
 import pandas as pd
 import math
-import numpy as np
-import json
-import os
+import numpy as np    
 
 print("\n=== Input variables ===")
-
-age = 42  
-gender = "male"      # "male" or "female"
-
-# Set default values for staging calculations
-time_horizon = "10yr"  # 10yr or "30yr"
+# Define age
+age = 65  # you can also prompt this from user if needed
+# Set default values instead of prompting user
+time_horizon = "10yr"  # or "30yr"
 condition = "cvd"      # "cvd", "ascvd", or "hf"
-calculation = "full"  # "base", "acr", "a1c", "sdi", "full"
+gender = "female"      # "male" or "female"
 
 print(f"Age and Gender: {age} year old {gender}")
 
-# ------------------------
-# Diagnostic variables
-# ------------------------
-AMI = "No"  # "Yes" or "No"
-cardiac_arrest = "No"  # "Yes" or "No"
-stable_angina = "No"  # "Yes" or "No"
-coronary_artery_disease = "No"  # "Yes" or "No"
-atrial_fibrillation = "No"  # "Yes" or "No"
-heart_failure = "No"  # "Yes" or "No"
-stroke_or_tia = "No"  # "Yes" or "No"
-ckmh = "No"  # "Yes" or "No"
-vascular_disease = "No" # "Yes" or "No"
-PAD = "No"  # "Yes" or "No"
-aortic_stenosis = "No"  # "Yes" or "No"
-valvular_disease = "No"  # "Yes" or "No"
-hcm = "No"  # "Yes" or "No"
-depression = "No"  # "Yes" or "No"
-anxiety = "No"  # "Yes" or "No"
-stress = "No"  # "Yes" or "No"
-coronary_artery_calcium = "No"  # "Yes" or "No"
-ejection_fraction = 35  # 20-70
-
-# ------------------------
-# Procedures and devices
-# ------------------------
-CABG = "No"  # "Yes" or "No"
-PCI = "No"  # "Yes" or "No"
-pacemaker= "No"  # "Yes" or "No"
-ICD = "No"  # "Yes" or "No"
-CRT = "No"  # "Yes" or "No"
-
-# ------------------------
-# Programs and therapeutucs
-# ------------------------
-
-cardiac_rehab = "No"  # "Yes" or "No"
-oncology = "No"  # "Yes" or "No"
-obstetrics = "No"  # "Yes" or "No"
-
-digital_coaching = "No"  # "Yes" or "No"
-RPM = "No"  # "Yes" or "No"
-digital_rx = "No"  # "Yes" or "No"
-
-# ------------------------
-# Medications
-# ------------------------
-medication_list = [
-    #{"name": "Sucubitril/Valsartan", "dose": "24/26 mg BID"},
-    #{"name": "Sucubitril/Valsartan", "dose": "49/51 BID"},
-    {"name": "Sucubitril/Valsartan", "dose": "97/103 mg BID"},
-    {"name": "Metoprolol Succinate", "dose": "100 mg BID"},
-    {"name": "Spironolactone", "dose": "25 mg BID"},
-    {"name": "Dapagliflozin", "dose": "10 mg daily"},
-    {"name": "Crestor", "dose": "10 mg daily"}
-
-]
-#CarePlan
-SMART_Goal = 0 #0 = set, 1 = not set
-symptoms = 0 # 1 if having symptoms or 0 if no symptoms are present
-medication_adherence = 1 # 0 = All the time,1 = inconsistently,2 = I am not taking my medication as prescribed
-action_plan = 0 #0 = following plan, 1 = inconsistent, 2 = not following plan
-
-step_count = 10000  # in steps per day
-steps_score = 0 if step_count >= 7000 else 1
-unplanned_visits = 0  # 0-10
-
-# ------------------------
-# Input values
-# ------------------------
-
 # Cholesterol inputs
 high_cholesterol = "No"  # "Yes" or "No"
-cholesterol_treatment = "No"  # "No", "Taking medications", "Making lifestyle changes"
-total_cholesterol = 220
-HDL_cholesterol = 46
-LDL_cholesterol = 100
-triglycerides = 120
+cholesterol_treatment = "Taking medications"  # "No", "Taking medications", "Making lifestyle changes"
+total_cholesterol = 200
+HDL_cholesterol = 45
+LDL_cholesterol = 130
+triglycerides = 150
 non_hdl_cholesterol = total_cholesterol - HDL_cholesterol
-Lpa = 4
 
 print(f"Cholesterol: Total Cholesterol {total_cholesterol} and HDL {HDL_cholesterol}")
 
 # Blood pressure
 hypertension = "Yes"  # "Yes" or "No"
 hypertension_treatment = "Taking medications"  # "No", "Taking medications", "Making lifestyle changes"
-systolic_blood_pressure = 112
-diastolic_blood_pressure = 74
-#id = 1
-#datetime = "2023-10-01"
+systolic_blood_pressure = 160
+diastolic_blood_pressure = 80
+id = 1
+datetime = "2023-10-01"
+symptoms = False
 
 print(f"Blood pressure:  {systolic_blood_pressure} / {diastolic_blood_pressure}")
 
 # Diabetes and glucose
 diabetes = "No"  # "Yes" or "No"
 diabetes_treatment = "No"  # "No", "Taking medications", "Making lifestyle changes"
-fasting_blood_sugar = 95
-A1c = 5.3
+fasting_blood_sugar = 90
+A1c = 5.7
 
 print(f"Glucose:  {fasting_blood_sugar} and A1c {A1c}")
 
 # Tobacco use
-tobacco_use = "Never used"  # "Current user", "Former user", "Never used"
+tobacco_use = "Current user"  # "Current user", "Former user", "Never used"
 quit_years = 0  # Only for "Former user"
 second_hand_smoke = "No"  # "Yes" or "No"
 
 print(f"Tobacco use: {tobacco_use}")
 
 # Weight and BMI
-weight = 180  # in pounds
-height = 74  # in inches
+height_in = 67  # in inches
+weight_lbs = 223   # in pounds
 
-BMI = (weight / 2.2) / ((height * 0.0254) ** 2)
+height = height_in * 2.54  # in centimeters
+weight = weight_lbs / 2.2   # in kilograms
+BMI = weight / (height / 100) ** 2
 
-print(f"BMI: {BMI:.2f}")
-
+print(f"BMI: {BMI:.1f}")
 
 # Physical activity
-moderate_intensity = 150  # in minutes per week
+moderate_intensity = 75  # in minutes per week
 vigorous_intensity = 75   # in minutes per week
 
 print(f"Physical activity: moderate {moderate_intensity} and vigorous {vigorous_intensity}")
 
 # Sleep
-sleep_hours = 7
+sleep_hours = 8
 
 print(f"Sleep: {sleep_hours} hours")
 
@@ -150,10 +77,6 @@ print(f"eGFR: {egfr}")
 #uacr  
 uacr = 40 #.1-25000
 print(f"uacr: {uacr}")
-
-# ------------------------
-# Calculate SDI from Zip code
-# ------------------------
 
 # Load SDI data
 sdi_df = pd.read_csv("zip-sdi.csv")
@@ -214,15 +137,10 @@ if sdi is not None:
 else:
     print("No SDI value retrieved.")
 
-# use this set as an alternative to the zip lookup function
 #zip_code = 78641
 #sdi = lookup_sdi(zip_code, sdi_df)
-#sdi = 5 #1-10
 #print(f"SDI for ZIP code {zip_code}: {sdi}")
 
-# ------------------------
-# Age
-# ------------------------
 # Dictionary of coefficients
 age_coefficients = {
     "10yr_cvd_female": 0.7716794,
@@ -252,12 +170,14 @@ def calculate_age_derived_value(time_horizon, condition, gender, age):
 
     return age_value
 
-# Age function
+# Calculate age value
 age_value = calculate_age_derived_value(time_horizon, condition, gender, age)
 age_derived = (age - 55) / 10
 
+# Print result
 #print(f"Age derived for {gender} with {condition} ({time_horizon}): {age_derived:.4f}")
 #print(f"Age value for {gender} with {condition} ({time_horizon}): {age_value:.4f}")
+
 
 # Dictionary of coefficients
 age_squared_coefficients = {
@@ -285,24 +205,21 @@ def calculate_age_squared_value(time_horizon, condition, gender, age):
     age_squared_value = age_squared_derived * coefficient
     return age_squared_value
 
-# Age squared function
+# Call the function
 age_squared_value = calculate_age_squared_value(time_horizon, condition, gender, age)
 age_squared_derived = ((age - 55) / 10) ** 2
-
-# Age squared result
+# Print the result
 #print(f"Age derived Value: {age_squared_derived:.6f}")
 #print(f"Age Squared Value: {age_squared_value:.6f}")
 
+# Print results
 print("\n=== Life's Essential 8 Summary ===")
 
-# ------------------------
-# Cholesterol and HDL
-# ------------------------
 def evaluate_cholesterol(high_cholesterol, cholesterol_treatment, total_cholesterol, HDL_cholesterol):
     # Calculate non-HDL cholesterol
     non_hdl_cholesterol = total_cholesterol - HDL_cholesterol
 
-    # Cholesterol Scoring logic
+    # Scoring logic
     if high_cholesterol == "No":
         cholesterol_score = 100
         message = "Goal met"
@@ -345,10 +262,10 @@ def evaluate_cholesterol(high_cholesterol, cholesterol_treatment, total_choleste
 
     return cholesterol_score, non_hdl_cholesterol, message
 
-# Cholesterol function
+# Call the function
 cholesterol_score, non_hdl, feedback = evaluate_cholesterol(high_cholesterol, cholesterol_treatment, total_cholesterol, HDL_cholesterol)
 
-#Cholesterol result
+#display the result
 #print(f"Non-HDL Cholesterol: {non_hdl}")
 #print(f"Cholesterol Score: {cholesterol_score}")
 print(f"Cholesterol assessment: {feedback}")
@@ -437,7 +354,7 @@ statin_coefficients = {
     "30yr_hf_female": 0,
     "30yr_hf_male": 0
 }
-# Function to calculate statin value
+    # Function to calculate statin value
 def calculate_statin_value(time_horizon, condition, gender, cholesterol_treatment):
         statin_derived = 1 if cholesterol_treatment.lower() == "taking medications" else 0
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
@@ -449,7 +366,7 @@ def calculate_statin_value(time_horizon, condition, gender, cholesterol_treatmen
         statin_value = statin_derived * coefficient
         return statin_value
 
-# Statin value function
+# Call the function
 statin_val = calculate_statin_value(time_horizon, condition, gender, cholesterol_treatment)
 #print(f"Statin value for {gender}, {condition}, {time_horizon}: {statin_val:.4f}")
 
@@ -469,15 +386,15 @@ non_hdl_statin_coefficients = {
 }
 # Function to calculate value of non-HDL × Statin interaction
 def calculate_non_hdl_statin_value(time_horizon, condition, gender, non_hdl_cholesterol, cholesterol_treatment):
-# Derived values
+    # Derived values
     non_hdl_derived = non_hdl_cholesterol * 0.02586 - 3.5
     statin_derived = 1 if cholesterol_treatment.lower() == "taking medications" else 0
     non_hdl_statin_derived = non_hdl_derived * statin_derived
 
-# Lookup key
+    # Lookup key
     key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Check key exists
+    # Check key exists
     if key not in non_hdl_statin_coefficients:
         raise ValueError(f"Invalid combination: {key}")
 
@@ -485,7 +402,7 @@ def calculate_non_hdl_statin_value(time_horizon, condition, gender, non_hdl_chol
     non_hdl_statin_value = non_hdl_statin_derived * coefficient
     return non_hdl_statin_value
 
-# Non HDL statin function
+# Call function
 non_hdl_statin_value = calculate_non_hdl_statin_value(time_horizon, condition, gender, non_hdl_cholesterol, cholesterol_treatment)
 #print(f"Non-HDL × Statin value: {value:.4f}")
 
@@ -506,19 +423,19 @@ age_non_hdl_coefficients = {
 
 # Function to calculate Age × Non-HDL value
 def calculate_age_non_hdl_value(time_horizon, condition, gender, age, non_hdl_cholesterol):
-# Derived variables
+        # Derived variables
         age_derived = (age - 55) / 10
         non_hdl_derived = non_hdl_cholesterol * 0.02586 - 3.5
         age_non_hdl_derived = age_derived * non_hdl_derived
 
-# Construct key
+        # Construct key
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Validate key
+        # Validate key
         if key not in age_non_hdl_coefficients:
             raise ValueError(f"Invalid combination: {key}")
 
-# Lookup coefficient and calculate value
+        # Lookup coefficient and calculate value
         coefficient = age_non_hdl_coefficients[key]
         age_non_hdl_value = age_non_hdl_derived * coefficient
         return age_non_hdl_value
@@ -546,12 +463,12 @@ age_hdl_coefficients = {
 
 # Function to calculate Age × HDL value
 def calculate_age_hdl_value(time_horizon, condition, gender, age, HDL_cholesterol):
-# Derived values
+        # Derived values
         age_derived = (age - 55) / 10
         hdl_derived = ((HDL_cholesterol * 0.02586) - 1.3) / 0.3
         age_hdl_derived = age_derived * hdl_derived
 
-# Key for coefficient lookup
+        # Key for coefficient lookup
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
         if key not in age_hdl_coefficients:
@@ -567,25 +484,21 @@ age_hdl_value = calculate_age_hdl_value(time_horizon, condition, gender, age, HD
 #print(f"Age × HDL derived: {age_hdl_derived:.4f}")
 #print(f"Age × HDL value: {age_hdl_value:.4f}")
 
-# ------------------------
-# Blood Pressure
-# ------------------------
-
-def assess_blood_pressure(hypertension, hypertension_treatment, systolic_blood_pressure, diastolic_blood_pressure, symptoms):
-# Normalize inputs
+def assess_blood_pressure(hypertension, hypertension_treatment, systolic_blood_pressure, diastolic_blood_pressure, symptoms=False):
+    # Normalize inputs
     hypertension = str(hypertension).strip().capitalize()
     hypertension_treatment = str(hypertension_treatment).strip().capitalize()
 
-# 1. Check for hypertensive crisis first
+    # 1. Check for hypertensive crisis first
     if systolic_blood_pressure >= 180 or diastolic_blood_pressure >= 120:
         category = "Hypertensive Crisis"
-        if symptoms >0:
+        if symptoms:
             message = "Hypertensive Crisis with Symptoms. This is a medical emergency. Call 911."
         else:
             message = "Hypertensive Crisis without Symptoms. Contact your health care professional as soon as possible."
         return 0, message, category
 
-# 2. Categorize based on standard blood pressure ranges
+    # 2. Categorize based on standard blood pressure ranges
     if systolic_blood_pressure < 90 or diastolic_blood_pressure < 60:
         category = "Low blood pressure"
     elif 90 <= systolic_blood_pressure < 120 and 60 <= diastolic_blood_pressure < 80:
@@ -599,7 +512,7 @@ def assess_blood_pressure(hypertension, hypertension_treatment, systolic_blood_p
     else:
         category = "Unclassified blood pressure"
 
-# 3. Scoring and message based on diagnosis and treatment
+    # 3. Scoring and message based on diagnosis and treatment
     if hypertension == "No":
         if systolic_blood_pressure < 120 and diastolic_blood_pressure < 80 and hypertension_treatment in ["No", "Making lifestyle changes"]:
             blood_pressure_score = 100
@@ -649,7 +562,7 @@ blood_pressure_score, feedback, category = assess_blood_pressure(
         symptoms
 )
 
-#print(f"Blood Pressure Score: {blood_pressure_score}")
+#print(f"Score: { blood_pressure_score}")
 print(f"Blood pressure assessment: {category} and {feedback}")
 
 min_sbp_coefficients = {
@@ -741,7 +654,7 @@ bptreat_coefficients = {
     "30yr_hf_male": 0.220666
 }
 
-# Function to calculate bptreat_value
+    # Function to calculate bptreat_value
 def calculate_bptreat_value(time_horizon, condition, gender, hypertension_treatment):
         bptreat_derived = 1 if hypertension_treatment == "Taking medications" else 0
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
@@ -808,15 +721,15 @@ age_sbp_coefficients = {
 
 # Function to calculate Age × SBP interaction value
 def calculate_age_sbp_value(time_horizon, condition, gender, age, systolic_blood_pressure):
-# Derived values
+        # Derived values
         age_derived = (age - 55) / 10
         max_sbp_derived = (max(systolic_blood_pressure, 110) - 130) / 20
         age_sbp_derived = age_derived * max_sbp_derived
 
-# Construct key
+        # Construct key
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
- # Validate and calculate
+        # Validate and calculate
         if key not in age_sbp_coefficients:
             raise ValueError(f"Invalid combination: {key}")
 
@@ -828,55 +741,36 @@ def calculate_age_sbp_value(time_horizon, condition, gender, age, systolic_blood
 age_sbp_value = calculate_age_sbp_value(time_horizon, condition, gender, age, systolic_blood_pressure)
 #print(f"Age × SBP Value: {age_sbp_value:.6f}")
 
-# ------------------------
-# Glucose and Diabetes
-# ------------------------
-
 def evaluate_glucose(diabetes, diabetes_treatment, fasting_blood_sugar, A1c):
     # Normalize text input (optional for safety)
     diabetes = diabetes.strip().capitalize()
     diabetes_treatment = diabetes_treatment.strip().capitalize()
 
-    # Convert numeric inputs to float safely
-    try:
-        fasting_blood_sugar = float(fasting_blood_sugar)
-    except (ValueError, TypeError):
-        fasting_blood_sugar = None
-
-    try:
-        A1c = float(A1c)
-    except (ValueError, TypeError):
-        A1c = None
-
     glucose_score = None
     message = ""
 
     # Case 1: No diabetes and within normal glucose range
-    if diabetes == "No" and (
-        (fasting_blood_sugar is not None and fasting_blood_sugar < 100) or
-        (A1c is not None and A1c < 5.7)
-    ):
+    if diabetes == "No" and (fasting_blood_sugar < 100 or A1c < 5.7):
         glucose_score = 100
         message = "Glucose goal met"
 
     # Case 2: Diabetes and on treatment
     elif diabetes == "Yes" and diabetes_treatment in ["Taking medications", "Making lifestyle changes"]:
-        if A1c is not None:
-            if A1c < 7:
-                glucose_score = 40
-                message = "Diabetes goal met"
-            elif 7 <= A1c < 8:
-                glucose_score = 30
-                message = "Your A1c is high"
-            elif 8 <= A1c < 9:
-                glucose_score = 20
-                message = "Your A1c is high"
-            elif 9 <= A1c < 10:
-                glucose_score = 10
-                message = "Your A1c is high"
-            elif A1c >= 10:
-                glucose_score = 0
-                message = "Your A1c is high"
+        if A1c < 7:
+            glucose_score = 40
+            message = "Diabetes goal met"
+        elif 7 <= A1c < 8:
+            glucose_score = 30
+            message = "Your A1c is high"
+        elif 8 <= A1c < 9:
+            glucose_score = 20
+            message = "Your A1c is high"
+        elif 9 <= A1c < 10:
+            glucose_score = 10
+            message = "Your A1c is high"
+        elif A1c >= 10:
+            glucose_score = 0
+            message = "Your A1c is high"
         else:
             glucose_score = 50
             message = "Diabetes goal met"
@@ -887,18 +781,12 @@ def evaluate_glucose(diabetes, diabetes_treatment, fasting_blood_sugar, A1c):
         message = "Diabetes will increase your health risk"
 
     # Case 4: No diabetes but elevated fasting glucose or A1c in prediabetic range
-    elif diabetes == "No" and (
-        (fasting_blood_sugar is not None and 100 <= fasting_blood_sugar <= 125) or
-        (A1c is not None and 5.7 <= A1c < 6.4)
-    ):
+    elif diabetes == "No" and ((100 <= fasting_blood_sugar <= 125) or (5.7 <= A1c < 6.4)):
         glucose_score = 60
         message = "Your glucose level is high"
 
     # Case 5: No diabetes but glucose clearly in diabetic range
-    elif diabetes == "No" and (
-        (fasting_blood_sugar is not None and fasting_blood_sugar > 125) or
-        (A1c is not None and A1c >= 6.4)
-    ):
+    elif diabetes == "No" and (fasting_blood_sugar > 125 or A1c >= 6.4):
         glucose_score = 40
         message = "Your glucose level is high"
 
@@ -909,15 +797,12 @@ def evaluate_glucose(diabetes, diabetes_treatment, fasting_blood_sugar, A1c):
 
     return glucose_score, message
 
-#Example call with inputs (ensure variables are defined before calling)
-#glucose_score, feedback = evaluate_glucose(diabetes, diabetes_treatment, fasting_blood_sugar, A1c)
-#print(f"Glucose assessment: {feedback}")
-
-# Glucose function
+# Call the function
 glucose_score, feedback = evaluate_glucose(diabetes, diabetes_treatment, fasting_blood_sugar, A1c)
 # Display the result
 #print(f"Glucose Score: {glucose_score}")
 print(f"Glucose assessment: {feedback}")
+
 
 diabetes_coefficients = {
     "10yr_cvd_female": 0.496753,
@@ -970,19 +855,19 @@ age_diabetes_coefficients = {
 
 # Function to calculate age × diabetes derived value and its coefficient-weighted value
 def calculate_age_diabetes_value(time_horizon, condition, gender, age, diabetes):
-# Derived values
+        # Derived values
         age_derived = (age - 55) / 10
         diabetes_derived = 1 if diabetes.strip().lower() == "yes" else 0
         age_diabetes_derived = age_derived * diabetes_derived
 
-# Build key for coefficient lookup
+        # Build key for coefficient lookup
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Validate key
+        # Validate key
         if key not in age_diabetes_coefficients:
             raise ValueError(f"Invalid combination: {key}")
 
-# Calculate value
+        # Calculate value
         coefficient = age_diabetes_coefficients[key]
         age_diabetes_value = age_diabetes_derived * coefficient
         return age_diabetes_value
@@ -1034,26 +919,26 @@ missing_A1c_derived_coefficients = {
     "30yr_hf_male": 0.0022806
 }
 def calculate_A1c_glucose_derived_value(time_horizon, condition, gender, A1c, diabetes):
-# Construct key
+    # Construct key
     key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Determine diabetes_derived from "Yes"/"No" (case-insensitive)
+    # Determine diabetes_derived from "Yes"/"No" (case-insensitive)
     diabetes_derived = 1 if str(diabetes).strip().lower() == "yes" else 0
 
-# convert A1c to float
+    # Safely attempt to convert A1c to float
     try:
         A1c = float(A1c)
     except (TypeError, ValueError):
         A1c = None
 
-# If A1c is missing, use default coefficient
+    # If A1c is missing, use default coefficient
     if A1c is None or (isinstance(A1c, float) and math.isnan(A1c)):
         if key not in missing_A1c_derived_coefficients:
             raise ValueError(f"Missing A1c: invalid combination for {key}")
         coefficient = missing_A1c_derived_coefficients[key]
         return 1 * coefficient
 
-# Otherwise, compute derived value
+    # Otherwise, compute derived value
     if key not in A1c_glucose_derived_coefficients:
         raise ValueError(f"Invalid combination: {key}")
     coefficient = A1c_glucose_derived_coefficients[key]
@@ -1062,29 +947,29 @@ def calculate_A1c_glucose_derived_value(time_horizon, condition, gender, A1c, di
 
     return A1c_glucose_value
 
-#import math
+import math
 
 def calculate_A1c_diabetes_derived_value(time_horizon, condition, gender, A1c, diabetes):
-# Build dictionary key
+    # Build dictionary key
     key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# determine if diabetes is "yes"
+    # Safely determine if diabetes is "yes"
     diabetes_derived = 1 if str(diabetes).strip().lower() == "yes" else 0
 
-# A1c to a float
+    # Try converting A1c to a float
     try:
         A1c = float(A1c)
     except (TypeError, ValueError):
         A1c = None
 
-# Handle missing A1c
+    # Handle missing A1c
     if A1c is None or (isinstance(A1c, float) and math.isnan(A1c)):
         if key not in missing_A1c_derived_coefficients:
             raise ValueError(f"Missing A1c: invalid combination for {key}")
         coefficient = missing_A1c_derived_coefficients[key]
         return 1 * coefficient
 
-# Handle valid A1c
+    # Handle valid A1c
     if key not in A1c_diabetes_derived_coefficients:
         raise ValueError(f"Invalid combination: {key}")
     coefficient = A1c_diabetes_derived_coefficients[key]
@@ -1093,15 +978,15 @@ def calculate_A1c_diabetes_derived_value(time_horizon, condition, gender, A1c, d
 
     return A1c_diabetes_value
 
+#A1c = None  # or A1c = 7.2
+#diabetes = "Yes"
+
 A1c_glucose_value = calculate_A1c_glucose_derived_value(time_horizon, condition, gender, A1c, diabetes)
 A1c_diabetes_value = calculate_A1c_diabetes_derived_value(time_horizon, condition, gender, A1c, diabetes)
 
 #print("A1c_glucose_value:", A1c_glucose_value)
 #print("A1c_diabetes_value:", A1c_diabetes_value)
 
-# ------------------------
-# Tobacco use
-# ------------------------
 def evaluate_tobacco_use(tobacco_use, quit_years, second_hand_smoke):
     if tobacco_use == "Never used":
         if second_hand_smoke == "No":
@@ -1141,7 +1026,8 @@ def evaluate_tobacco_use(tobacco_use, quit_years, second_hand_smoke):
 
     return tobacco_use_score, message
 
-# Tobacco function
+# Call the function
+
 tobacco_use_score, feedback = evaluate_tobacco_use(tobacco_use, quit_years, second_hand_smoke)
 
 # Display result
@@ -1165,17 +1051,17 @@ smoking_coefficients = {
 }
 
 def calculate_smoking_value(time_horizon, condition, gender, tobacco_use):
-# Derived value: 1 if current smoker, else 0
+    # Derived value: 1 if current smoker, else 0
     smoking_derived = 1 if tobacco_use.strip().lower() == "current user" else 0
 
-# Build key for coefficient lookup
+    # Build key for coefficient lookup
     key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Validate key
+    # Validate key
     if key not in smoking_coefficients:
         raise ValueError(f"Invalid combination: {key}")
 
-# Lookup coefficient and compute final value
+    # Lookup coefficient and compute final value
     coefficient = smoking_coefficients[key]
     smoking_value = smoking_derived * coefficient
     return smoking_value
@@ -1199,15 +1085,15 @@ age_smoking_coefficients = {
 }
 
 def calculate_age_smoking_value(time_horizon, condition, gender, age, tobacco_use):
-# Derived values
+        # Derived values
         age_derived = (age - 55) / 10
         smoking_derived = 1 if tobacco_use.lower() == "current user" else 0
         age_smoking_derived = age_derived * smoking_derived
 
-# Construct key
+        # Construct key
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Validate and get coefficient
+        # Validate and get coefficient
         if key not in age_smoking_coefficients:
             raise ValueError(f"Invalid combination: {key}")
 
@@ -1219,11 +1105,9 @@ def calculate_age_smoking_value(time_horizon, condition, gender, age, tobacco_us
 age_smoking_value = calculate_age_smoking_value(time_horizon, condition, gender, age, tobacco_use)
 #print(f"Age-Smoking Value: {age_smoking_value:.6f}")
 
-# ------------------------
-# Weight and BMI
-# ------------------------
 def evaluate_weight(weight, height):
     # Calculate BMI
+    #BMI = weight / (height / 100) ** 2
 
     # Evaluate weight score based on BMI
     if BMI < 25:
@@ -1271,13 +1155,13 @@ min_bmi_coefficients = {
 }
 
 def calculate_min_bmi_value(time_horizon, condition, gender, BMI):
-# Derived value
+        # Derived value
         min_bmi_derived = (min(BMI, 30) - 25) / 5
 
-# Key for coefficient lookup
+        # Key for coefficient lookup
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Validate and retrieve coefficient
+        # Validate and retrieve coefficient
         if key not in min_bmi_coefficients:
             raise ValueError(f"Invalid combination: {key}")
 
@@ -1304,13 +1188,13 @@ max_bmi_coefficients = {
     "30yr_hf_male": 0.2643081
 }
 def calculate_max_bmi_value(time_horizon, condition, gender, BMI):
-# Derived value
+        # Derived value
         max_bmi_derived = (max(BMI, 30) - 30) / 5
 
-# Create the coefficient key
+        # Create the coefficient key
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Validate and apply coefficient
+        # Validate and apply coefficient
         if key not in max_bmi_coefficients:
             raise ValueError(f"Invalid combination: {key}")
 
@@ -1336,15 +1220,15 @@ age_bmi_coefficients = {
     "30yr_hf_male": -0.0174998
 }
 def calculate_age_bmi_value(time_horizon, condition, gender, age, BMI):
-# Derived values
+        # Derived values
         age_derived = (age - 55) / 10
         max_bmi_derived = (max(BMI, 30) - 30) / 5
         age_bmi_derived = age_derived * max_bmi_derived
 
-# Construct key
+        # Construct key
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Validate and get coefficient
+        # Validate and get coefficient
         if key not in age_bmi_coefficients:
             raise ValueError(f"Invalid combination: {key}")
 
@@ -1356,11 +1240,7 @@ age_bmi_value = calculate_age_bmi_value(time_horizon, condition, gender, age, BM
 #print("age_bmi_value:", round(age_bmi_value, 5))
 
 #PREVENT values not already defined
-
-# ------------------------
-# eGFR
-# ------------------------
-
+#egfr = 90 #15-150
 min_egfr_coefficients = {
     "10yr_cvd_female": 0.4780697,
     "10yr_cvd_male": 0.3886854,
@@ -1435,12 +1315,12 @@ age_egfr_coefficients = {
 }
 
 def calculate_age_egfr_value(time_horizon, condition, gender, age, egfr):
-# Derived components
+        # Derived components
         age_derived = (age - 55) / 10
         max_egfr_derived = (max(egfr, 60) - 90) / -15
         age_egfr_derived = age_derived * max_egfr_derived
 
-# Select coefficient
+        # Select coefficient
         key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
         if key not in age_egfr_coefficients:
@@ -1454,9 +1334,7 @@ def calculate_age_egfr_value(time_horizon, condition, gender, age, egfr):
 age_egfr_value = calculate_age_egfr_value(time_horizon, condition, gender, age, egfr)
 #print("age_egfr_value:", round(age_egfr_value, 5))
 
-# ------------------------
-# UACR
-# ------------------------
+#uacr = 40 #.1-25000
 uacr_derived_coefficients = {
     "10yr_cvd_female": 0.1645922,
     "10yr_cvd_male": 0.1772853,
@@ -1490,13 +1368,13 @@ missing_uacr_derived_coefficients = {
 def calculate_uacr_value(time_horizon, condition, gender, uacr):
     key = f"{time_horizon.lower()}_{condition.lower()}_{gender.lower()}"
 
-# Handle blank or non-numeric UACR input
+    # Handle blank or non-numeric UACR input
     try:
         uacr = float(uacr)
     except (ValueError, TypeError):
         uacr = None
 
-# Check for missing or invalid UACR
+    # Check for missing or invalid UACR
     if uacr is None or uacr <= 0 or (isinstance(uacr, float) and math.isnan(uacr)):
         if key not in missing_uacr_derived_coefficients:
             raise ValueError(f"Invalid combination for missing UACR: {key}")
@@ -1517,9 +1395,7 @@ try:
 except ValueError as e:
     print(str(e))
 
-# ------------------------
-# Social Deprivation Index
-# ------------------------
+#sdi = 5 #1-10
 min_sdi_derived_coefficients = {
     "10yr_cvd_female": 0.1361989,
     "10yr_cvd_male": 0.0802431,
@@ -1605,9 +1481,7 @@ max_sdi_value = calculate_max_sdi_derived_value(time_horizon, condition, gender,
 #print(f"min_sdi_value: {min_sdi_value:.6f}")
 #print(f"max_sdi_value: {max_sdi_value:.6f}")
 
-# ------------------------
-# Physical Activity
-# ------------------------
+#MCL section
 def calculate_physical_activity_score(moderate_intensity, vigorous_intensity):
     # Calculate total activity: vigorous counts double
     total_physical_activity = moderate_intensity + (vigorous_intensity * 2)
@@ -1637,16 +1511,12 @@ def calculate_physical_activity_score(moderate_intensity, vigorous_intensity):
 
     return total_physical_activity, total_physical_activity_score
 
-# Physical activity function
+# Call the function
 total_minutes, total_physical_activity_score = calculate_physical_activity_score(moderate_intensity, vigorous_intensity)
 
 # Display result
 #print(f"Total Physical Activity (minutes): {total_minutes}")
 #print(f"Be More Active Score: {total_physical_activity_score}")
-
-# ------------------------
-# Sleep
-# ------------------------
 
 # Sleep
 def evaluate_sleep(sleep_hours):
@@ -1677,7 +1547,7 @@ def evaluate_sleep(sleep_hours):
 
     return sleep_score, message
 
-# Sleep function
+# Call the function
 sleep_score, note = evaluate_sleep(sleep_hours)
 
 # Display result
@@ -1685,9 +1555,6 @@ sleep_score, note = evaluate_sleep(sleep_hours)
 #print(f"Sleep Score: {sleep_score}")
 print(f"Sleep assessment: {note}")
 
-# ------------------------
-# Nutrition  
-# ------------------------
 # Nutrition intake (days per week or servings per day)
 green_leafy_vegetables = 7
 berries = 2
@@ -1709,106 +1576,106 @@ restaurant_meals = 1
 
 def calculate_eat_better_function_score(green_leafy_vegetables, berries, red_meat, fish_seafood, poultry,beans_peas, nuts,full_fat_dairy, butter_cream, sugary_drinks, vegetables, fruits, whole_grains, olive_oil, alcohol, gender, restaurant_meals
 ):
-# Individual scores based on criteria
-# Green leafy vegetables
+    # Individual scores based on criteria
+    # Green leafy vegetables
     if green_leafy_vegetables < 7:
         green_leafy_vegetables_score = 0
         message = "You are not eating enough green leafy vegetables"
     else:
         green_leafy_vegetables_score = 1
         message = "Goal met"
-#berries
+    #berries
     if berries < 2:
         berries_score = 0
         message = "You are not eating enough berries"
     else:    
         berries_score = 1
         message = "Goal met"
-# Red meat
+    # Red meat
     if red_meat < 3:
         red_meat_score = 0
         message = "You are eating too much red meat"
     else:
         red_meat_score = 1
         message = "Goal met"
-# Fish and seafood
+    # Fish and seafood
     if fish_seafood < 1:
         fish_seafood_score = 0
         message = "You are not eating enough fish and seafood"
     else:
         fish_seafood_score = 1
         message = "Goal met"
-# Poultry
+    # Poultry
     if poultry < 5:
         poultry_score = 0
         message = "You are not eating enough poultry"
     else:
         poultry_score = 1
         message = "Goal met"
-# Beans and peas
+    # Beans and peas
     if beans_peas < 4:
         beans_peas_score = 0
         message = "You are not eating enough beans and peas"
     else:
         beans_peas_score = 1
         message = "Goal met"
-# Nuts
+    # Nuts
     if nuts < 4:
         nuts_score = 0
         message = "You are not eating enough nuts"
     else:
         nuts_score = 1
         message = "Goal met"
-# Full fat dairy
+    # Full fat dairy
     if full_fat_dairy > 4:
         full_fat_dairy_score = 0
         message = "You are eating too much full fat dairy"
     else:
         full_fat_dairy_score = 1
         message = "Goal met"
-# Butter and cream
+    # Butter and cream
     if butter_cream > 5:
         butter_cream_score = 0
         message = "You are eating too much butter and cream"
     else:
         butter_cream_score = 1
         message = "Goal met"
-# Sugary drinks
+    # Sugary drinks
     if sugary_drinks > 4:
         sugary_drinks_score = 0
         message = "You are eating too many sugary drinks"
     else:
         sugary_drinks_score = 1
         message = "Goal met"
-# Vegetables
+    # Vegetables
     if vegetables < 2:
         vegetables_score = 0
         message = "You are not eating enough vegetables"
     else:
         vegetables_score = 1
         message = "Goal met"
-# Fruits
+    # Fruits
     if fruits < 1:
         fruits_score = 0
         message = "You are not eating enough fruits"
     else:
         fruits_score = 1
         message = "Goal met"
-# Whole grains
+    # Whole grains
     if whole_grains < 3:
         whole_grains_score = 0
         message = "You are not eating enough whole grains"
     else:
         whole_grains_score = 1
         message = "Goal met"
-# Olive oil
+    # Olive oil
     if olive_oil < 3:
         olive_oil_score = 0
         message = "You are not eating enough olive oil"
     else:
         olive_oil_score = 1
         message = "Goal met"
-# Alcohol    
+    # Alcohol    
     if alcohol > 2 and gender == 'Male':
         alcohol_score = 0
         message = "You are drinking too much alcohol"
@@ -1817,7 +1684,7 @@ def calculate_eat_better_function_score(green_leafy_vegetables, berries, red_mea
     else:
         alcohol_score = 1
         message = "Goal met"
-# Restaurant meals
+    # Restaurant meals
     if restaurant_meals > 2:
         restaurant_meals_score = 0
         message = "You are eating too many restaurant meals"
@@ -1825,14 +1692,14 @@ def calculate_eat_better_function_score(green_leafy_vegetables, berries, red_mea
         restaurant_meals_score = 1
         message = "Goal met"
 
-# Eat Better score
+# Total score
     eat_better_score = sum([
         green_leafy_vegetables_score, berries_score, red_meat_score, fish_seafood_score, poultry_score,
         beans_peas_score, nuts_score, full_fat_dairy_score, butter_cream_score, sugary_drinks_score,
         vegetables_score, fruits_score, whole_grains_score, olive_oil_score, alcohol_score, restaurant_meals_score
     ])
 
-# Nutrition scoring criteria
+    # Scoring criteria
     if eat_better_score >= 15:
         score = 100
         message = "Eat better goal met"
@@ -1862,9 +1729,6 @@ eat_better_score, nutrition_score, message = calculate_eat_better_function_score
 #print("Overall Nutrition Score:", nutrition_score)
 print("Nutrition assessment:", message)
 
-# ------------------------
-# My Life Check
-# ------------------------
 # Calculate MLC score
 MLC_score = (
     total_physical_activity_score/8
@@ -1890,49 +1754,6 @@ print("\n=== My Life Check Summary ===")
 print(f"MLC Score (out of 100): {MLC_score}")
 print(f"Cardiovascular Health Status: {cvh_category}")
 
-# ------------------------
-# Metabolic Syndrome
-# ------------------------
-def calculate_metabolic_syndrome( 
-    HDL_cholesterol,
-    triglycerides,
-    systolic_blood_pressure,
-    BMI,
-    fasting_blood_sugar
-):
-    score = 0
-
-    if HDL_cholesterol < 40:
-        score += 1
-    if triglycerides > 150:
-        score += 1
-    if systolic_blood_pressure > 130:
-        score += 1
-    if BMI > 30:
-        score += 1
-    if fasting_blood_sugar > 100:
-        score += 1
-
-    diagnosis = "You have the Metabolic Syndrome" if score >= 3 else "You do not have the Metabolic Syndrome"
-
-    return score, diagnosis
-
-met_score, met_diagnosis = calculate_metabolic_syndrome(
-    HDL_cholesterol=HDL_cholesterol,
-    triglycerides=triglycerides,
-    systolic_blood_pressure=systolic_blood_pressure,
-    BMI=bmi,
-    fasting_blood_sugar=fasting_blood_sugar
-)
-
-# Print the results
-print("\n=== Metabolic Syndrome ===")
-print(f"Metabolic Syndrome Score: {met_score}")
-print(met_diagnosis)
-
-# ------------------------
-#PREVENT
-# ------------------------
 # Intercept dictionary
 intercept_constants = {
     "10yr_cvd_female": -3.860385, "10yr_cvd_male": -3.631387,
@@ -1999,665 +1820,3 @@ for time_horizon in time_horizons:
         except ValueError as e:
             print(str(e))
 #print(f"PREVENT Risk Score Sum: {risk_score_sum}")
-
-# ------------------------
-# CKMH Staging
-# ------------------------
-def determine_ckm_stage(
-    BMI,
-    fasting_blood_sugar,
-    met_score,
-    risk_score,
-    AMI="No",
-    stroke_or_tia="No",
-    PAD="No",
-    PCI="No",
-    CABG="No",
-    heart_failure="No",
-    MLC_score=0,
-    ckd_stage=None
-):
-
-    #Classify CKM Syndrome Stage (0–4) based on AHA guidance and PREVENT inputs.
-
-    met_score = int(met_score)
-    MLC_score = float(MLC_score)
-    risk_score = float(risk_score)
-    fasting_blood_sugar = float(fasting_blood_sugar)
-    BMI = float(BMI)
-
-    has_clinical_cvd = any(x.strip().lower() == "yes" for x in [AMI, stroke_or_tia, PAD, PCI, CABG, heart_failure])
-    subclinical_cvd = any(x.strip().lower() == "yes" for x in [coronary_artery_disease, coronary_artery_calcium, stable_angina])
-
-    if has_clinical_cvd:
-        return 4  # Stage 4 – Clinical CVD
-
-    if (
-        subclinical_cvd or
-        risk_score >= 0.075 or  
-        MLC_score < 50
-    ):
-       return 3  # Stage 3 – Subclinical or high predicted risk
-
-    if (
-            met_score >= 3 or
-            (MLC_score is not None and MLC_score < 80) or
-            fasting_blood_sugar > 100 or
-            #0.05 <= risk_score < 0.075 or
-            risk_score >= 0.075 or
-            (ckd_stage is not None and ckd_stage >= 2)
-        ):
-            return 2  # Stage 2 – Metabolic risk
-
-    if BMI >= 25 and MLC_score >= 80 and met_score < 3 and fasting_blood_sugar <= 100:
-            return 1  # Stage 1 – Adiposity without risk
-
-    if BMI < 25 and met_score < 3 and fasting_blood_sugar <= 100 and risk_score < 0.075:
-        return 0  # Stage 0 – Healthy
-
-    return None  # Unclassified
-ckd_stage = None  
-
-ckm_stage = determine_ckm_stage(
-    BMI=bmi,
-    fasting_blood_sugar=fasting_blood_sugar,
-    met_score=met_score,
-    risk_score=risk_score,
-    AMI=AMI,
-    stroke_or_tia=stroke_or_tia,
-    PAD=PAD,
-    PCI=PCI,
-    CABG=CABG,
-    heart_failure=heart_failure,
-    MLC_score=MLC_score,
-    ckd_stage=ckd_stage  
-)
-
-print("\n=== CKM Stage ===")
-print(f"CKM Stage: {ckm_stage}")
-
-# ----------------------
-# GDMT
-# ----------------------
-
-def classify_heart_failure(heart_failure, ejection_fraction):
-
-        if heart_failure.strip().lower() == "yes":
-            if ejection_fraction < 40:
-                return "HFrEF"  # Heart Failure with Reduced Ejection Fraction
-            elif 40 < ejection_fraction < 50:
-                return "HFmrEF"  # Heart Failure with Preserved EF (could also use HFmrEF if EF 40–49)
-            elif ejection_fraction >= 50:
-                return "HFpEF"
-        else:
-            return "No heart failure"
-
-hf_category = classify_heart_failure(heart_failure, ejection_fraction)
-print("\n=== Guideline Directed Medical Therapy ===")
-print(f"Heart Failure Category: {hf_category}")
-
-#GDMT
-def gdmt_hfref(
-    heart_failure,
-    ejection_fraction,
-    systolic_blood_pressure,
-    diastolic_blood_pressure,
-    symptoms,
-    medication_list
-):
-
-    if heart_failure.strip().lower() != "yes" or ejection_fraction >= 40:
-        return ["Patient does not meet criteria for HFrEF-directed therapy."]
-
-    bp_ok = systolic_blood_pressure > 90 and diastolic_blood_pressure > 60
-    asymptomatic = symptoms == 0
-
-    recs = []
-
-def gdmt_hfref(
-    heart_failure,
-    ejection_fraction,
-    systolic_blood_pressure,
-    diastolic_blood_pressure,
-    symptoms,
-    medication_list
-):
-    if heart_failure.strip().lower() != "yes" or ejection_fraction >= 40:
-        return ["Patient does not meet criteria for HFrEF-directed therapy."]
-
-    bp_ok = systolic_blood_pressure > 90 and diastolic_blood_pressure > 60
-    asymptomatic = symptoms == 0
-    recs = []
-
-# ----------------------
-# RAAS Inhibitor (ARNI, ACE, ARB)
-# ----------------------
-    optimal_raas_inhibitor = False
-    arni_dose = None
-    ace_dose = None
-    arb_dose = None
-    has_ace_or_arb = False
-
-    for med in medication_list:
-        name = med["name"].strip().lower()
-        dose = med["dose"].strip().lower()
-
-# ARNI
-        if name == "sucubitril/valsartan":
-            arni_dose = dose
-            if dose == "97/103 mg bid":
-                optimal_raas_inhibitor = True
-
-# ACE Inhibitors
-        if name in ["captopril", "enalapril", "lisinopril", "ramipril"]:
-            has_ace_or_arb = True
-            if (name == "captopril" and dose == "50 mg bid") or \
-               (name == "enalapril" and dose == "20 mg bid") or \
-               (name == "lisinopril" and dose == "40 mg daily") or \
-               (name == "ramipril" and dose == "10 mg daily"):
-                optimal_raas_inhibitor = True
-            else:
-                ace_dose = dose
-
-# ARBs
-        if name in ["candesartan", "losartan", "valsartan"]:
-            has_ace_or_arb = True
-            if (name == "candesartan" and dose == "32 mg daily") or \
-               (name == "losartan" and dose == "150 mg daily") or \
-               (name == "valsartan" and dose == "160 mg bid"):
-                optimal_raas_inhibitor = True
-            else:
-                arb_dose = dose
-
-    if not arni_dose and not has_ace_or_arb:
-        if bp_ok and asymptomatic:
-            recs.append("Consider initiating RAAS inhibitor (ARNI preferred, or ACEi/ARB)")
-    elif not optimal_raas_inhibitor:
-        recs.append("Consider up-titrating RAAS inhibitor to optimal dose")
-
-# ------------------------
-# Beta-Blockers
-# ------------------------
-    optimal_beta_blocker = False
-    for med in medication_list:
-        name = med["name"].strip().lower()
-        dose = med["dose"].strip().lower()
-        if name == "carvedilol" and dose == "25 mg bid":
-            optimal_beta_blocker = True
-        elif name == "metoprolol succinate" and dose == "100 mg bid":
-            optimal_beta_blocker = True
-        elif name == "bisoprolol" and dose == "10 mg qd":
-            optimal_beta_blocker = True
-
-    if not optimal_beta_blocker:
-        has_beta = any(med["name"].strip().lower() in ["carvedilol", "metoprolol succinate", "bisoprolol"] for med in medication_list)
-        if not has_beta and bp_ok and asymptomatic:
-            recs.append("Consider starting a beta-blocker (e.g., Carvedilol 3.125 mg BID or Metoprolol Succinate 12.5 mg QD)")
-        elif has_beta and bp_ok and asymptomatic:
-            recs.append("Consider up-titrating beta-blocker to target dose")
-
-# ------------------------
-# MRAs
-# ------------------------
-    optimal_mra = False
-    for med in medication_list:
-        name = med["name"].strip().lower()
-        dose = med["dose"].strip().lower()
-        if name == "spironolactone" and dose == "25 mg bid":
-            optimal_mra = True
-        elif name == "eplerenone" and dose == "50 mg daily":
-            optimal_mra = True
-
-    if not optimal_mra:
-        has_mra = any(med["name"].strip().lower() in ["spironolactone", "eplerenone"] for med in medication_list)
-        if not has_mra:
-            recs.append("Consider adding MRA (e.g., Spironolactone 12.5–25 mg QD)")
-        else:
-            recs.append("Consider up-titrating MRA to target dose")
-
-# ------------------------
-# SGLT2 Inhibitors
-# ------------------------
-    optimal_sglt2 = False
-    for med in medication_list:
-        name = med["name"].strip().lower()
-        dose = med["dose"].strip().lower()
-        if (name == "dapagliflozin" or name == "empagliflozin") and dose == "10 mg daily":
-            optimal_sglt2 = True
-
-    if not optimal_sglt2:
-        has_sglt2 = any(med["name"].strip().lower() in ["dapagliflozin", "empagliflozin"] for med in medication_list)
-        if not has_sglt2:
-            recs.append("Consider adding SGLT2 inhibitor (e.g., Dapagliflozin 10 mg QD)")
-        else:
-            recs.append("Adjust SGLT2 inhibitor to 10 mg daily")
-
-# ------------------------
-# Final Optimal GDMT Check
-# ------------------------
-    if optimal_raas_inhibitor and optimal_beta_blocker and optimal_mra and optimal_sglt2:
-        return ["Guideline directed medical therapy for heart failure achieved"]
-
-    return recs
-
-recommendations = gdmt_hfref(
-        heart_failure,
-        ejection_fraction,
-        systolic_blood_pressure,
-        diastolic_blood_pressure,
-        symptoms,
-        medication_list=medication_list
-    )
-for r in recommendations:
-    print(f"- {r}")
-
-# ------------------------
-# CarePlan Titration Protocol
-# ------------------------
-def care_plan_score(
-    SMART_Goal,
-    symptoms,
-    medication_adherence,
-    action_plan,
-    systolic_blood_pressure,
-    diastolic_blood_pressure,
-    non_hdl_cholesterol,
-    A1c
-):
-    # Core score
-    care_plan_core = SMART_Goal + symptoms + medication_adherence + action_plan
-
-    # Treatment targets
-    blood_pressure_at_goal = 0 if systolic_blood_pressure < 120 and diastolic_blood_pressure < 80 else 1
-    cholesterol_at_goal = 0 if non_hdl_cholesterol < 130 else 1
-
-    # Handle A1c being None or blank
-    try:
-        diabetes_at_goal = 0 if float(A1c) < 7 else 1
-    except (TypeError, ValueError):
-        diabetes_at_goal = 0  # Default to 0 if A1c is missing or invalid
-
-    # Treatment total
-    treatment_at_goal = blood_pressure_at_goal + cholesterol_at_goal + diabetes_at_goal
-
-    # Total score
-    total_score = care_plan_core + treatment_at_goal
-
-    # Follow-up logic
-    if total_score == 0:
-        follow_up = "Repeat in 4 weeks"
-    elif total_score <= 2:
-        follow_up = "Repeat in 2 weeks"
-    else:
-        follow_up = "Repeat in 1 week"
-
-    # Message to professional
-    message_to_professional = "Alert: Notify healthcare professional" if total_score > 1 else None
-
-    return total_score, follow_up, message_to_professional
-
-
-# Sample call (insert your actual variables here)
-cp_score, follow_up, cp_message = care_plan_score(
-    SMART_Goal,
-    symptoms,
-    medication_adherence,
-    action_plan,
-    systolic_blood_pressure,
-    diastolic_blood_pressure,
-    non_hdl_cholesterol,
-    A1c
-)
-
-print("\n=== CarePlan Score ===")
-print(f"Follow-up Recommendation: {follow_up}")
-if cp_message:
-    print(cp_message)
-
-# ------------------------
-# Chads2Vasc
-# ------------------------
-
-def calculate_chads2vasc(
-    age,
-    gender,
-    heart_failure,
-    hypertension,
-    diabetes,
-    stroke_or_tia,
-    vascular_disease
-):
-
-    c2v_score = 0
-
-# Convert string inputs to boolean
-    hf = heart_failure.strip().lower() == "yes"
-    htn = hypertension.strip().lower() == "yes"
-    dm = diabetes.strip().lower() == "yes"
-    stroke = stroke_or_tia.strip().lower() == "yes"
-    vasc = vascular_disease.strip().lower() == "yes"
-    female = gender.strip().lower() == "female"
-
-    if hf:
-        c2v_score += 1
-    if htn:
-        c2v_score += 1
-    if age >= 75:
-        c2v_score += 2
-    elif 65 <= age < 75:
-        c2v_score += 1
-    if dm:
-        c2v_score += 1
-    if stroke:
-        c2v_score += 2
-    if vasc:
-        c2v_score += 1
-    if female:
-        c2v_score += 1
-
-    return c2v_score
-
-# call the function
-chads2vasc_score = calculate_chads2vasc(
-    age=age,
-    gender=gender,
-    heart_failure=heart_failure,
-    hypertension=hypertension,
-    diabetes=diabetes,
-    stroke_or_tia=stroke_or_tia,
-    vascular_disease=vascular_disease
-)
-
-# Print the result
-print("\n=== CHA₂DS₂-VASc Score ===")
-print(f"CHA₂DS₂-VASc Score: {chads2vasc_score}")
-
-# ------------------------
-# Cardiac Rehab Eligibility
-# ------------------------
-def calculate_cardiac_rehab_eligibility(
-    CABG,
-    AMI,
-    PCI,
-    cardiac_arrest,
-    heart_failure
-):
-
-    if (
-        CABG.strip().lower() == "yes" or
-        AMI.strip().lower() == "yes" or
-        PCI.strip().lower() == "yes" or
-        cardiac_arrest.strip().lower() == "yes" or
-        heart_failure.strip().lower() == "yes"
-    ):
-        return "Yes"
-    else:
-        return "No"
-
-# Calculate eligibility
-rehab_eligibility = calculate_cardiac_rehab_eligibility(
-    CABG=CABG,
-    AMI=AMI,
-    PCI=PCI,
-    cardiac_arrest=cardiac_arrest,
-    heart_failure=heart_failure
-)
-
-# Output result
-print("\n=== Cardiac Rehab Elibibility ===")
-print(f"Cardiac Rehab Eligibility: {rehab_eligibility}")
-
-# ------------------------
-# Healthy Day at Home
-# ------------------------
-def healthy_day_at_home(symptoms, step_count, unplanned_visits, medication_adherence):
-
-    steps_score = 0 if step_count >= 7000 else 1
-    healthy_day_score = symptoms + steps_score + unplanned_visits + medication_adherence
-
-    if healthy_day_score == 0:
-        message = "Excellent: Healthy day at home achieved!"
-    elif healthy_day_score == 1:
-        message = "Good: Minor issue noted, keep monitoring."
-    elif healthy_day_score <= 3:
-        message = "Caution: Some health concerns—consider checking in."
-    else:
-        message = "Alert: High concern—follow up with your care team."
-
-    return healthy_day_score, message
-
-score, note = healthy_day_at_home(symptoms, step_count, unplanned_visits, medication_adherence)
-
-print("\n=== Healthy Day at Home ===")
-#print(f"Healthy Day Score: {score}")
-print(f"Message: {note}")
-
-
-# ------------------------
-# Exercise Session
-# ------------------------
-
-def pre_exercise_check(
-    symptoms_since_last_session,
-    medications_taken_as_prescribed,
-    mental_health,
-    resting_heart_rate,
-    systolic_blood_pressure,
-    diastolic_blood_pressure,
-    glucose,
-    pulse_ox,
-    ecg
-):
-    # Symptom and medication checks
-    if symptoms_since_last_session.lower() == "yes":
-        return "Follow up with healthcare professional before exercise"
-    if medications_taken_as_prescribed.lower() == "no":
-        return "Take medications before exercise"
-    if mental_health.lower() != "good":
-        return "Address mental health prior to exercise"
-
-    # Biometric checks
-    if resting_heart_rate < 60 or resting_heart_rate > 100:
-        return "Follow up with healthcare professional before exercise"
-    if systolic_blood_pressure > 180:
-        return "Follow up with healthcare professional before exercise"
-    if diastolic_blood_pressure > 100:
-        return "Follow up with healthcare professional before exercise"
-    if glucose > 240:
-        return "Follow up with healthcare professional before exercise"
-    if pulse_ox < 90:
-        return "Follow up with healthcare professional before exercise"
-    if ecg.lower() != "normal":
-        return "Follow up with healthcare professional before exercise"
-
-    # All checks passed
-    return "Proceed to exercise phase"
-
-
-# Example usage:
-pre_status = pre_exercise_check(
-    symptoms_since_last_session="no",
-    medications_taken_as_prescribed="yes",
-    mental_health="good",
-    resting_heart_rate=72,
-    systolic_blood_pressure=130,
-    diastolic_blood_pressure=85,
-    glucose=110,
-    pulse_ox=96,
-    ecg="normal"
-)
-print("\n=== Exercise Session ===")
-print("Pre-Exercise Status:", pre_status)
-
-
-
-# -------------------- Logic Functions --------------------
-
-def check_progression(exercise_heart_rate, target_heart_rate, perceived_exertion, symptoms):
-    if any(symptom.lower() != "no" for symptom in symptoms):
-        return "❗ Stop exercise and check in with healthcare professional"
-
-    hr_diff = exercise_heart_rate - target_heart_rate
-
-    if -5 <= hr_diff <= 5 and 3 <= perceived_exertion <= 4:
-        return "✅ Proceed to next stage"
-    elif hr_diff < -5 and perceived_exertion < 3:
-        return "➡️ Advance to the next level"
-    elif hr_diff > 5 and perceived_exertion > 4:
-        return "⬅️ Return to previous level"
-    else:
-        return "⏸️ Maintain current stage and monitor"
-
-def post_exercise_check(
-    post_exercise_heart_rate,
-    resting_heart_rate,
-    post_exercise_systolic_bp,
-    post_exercise_diastolic_bp,
-    post_exercise_glucose,
-    symptoms
-):
-    if any(symptom.lower() != "no" for symptom in symptoms):
-        return "⚠️ Continue monitoring"
-
-    hr_recovered = post_exercise_heart_rate < 100 or abs(post_exercise_heart_rate - resting_heart_rate) <= 10
-    bp_ok = post_exercise_systolic_bp < 180 and post_exercise_diastolic_bp < 100
-
-    if hr_recovered and bp_ok:
-        return "✅ You can end the session"
-    else:
-        return "⚠️ Continue monitoring"
-
-
-# -------------------- Prescription Input --------------------
-
-def input_exercise_stage(stage_number):
-    print(f"\n--- Input for Stage {stage_number} ---")
-    stage_name = input("Enter stage name (warm-up, cardio, resistance, cool-down): ").strip().lower()
-    modality = input("Enter modality (walking, cycling, swimming, dancing, jogging, resistance band): ").strip().lower()
-    intensity = input("Enter intensity (e.g., 3 mph, level 5, moderate): ").strip()
-    duration = int(input("Enter duration (in minutes): ").strip())
-
-    stage = {
-        "stage_name": stage_name,
-        "modality": modality,
-        "duration": duration,
-        "intensity": intensity,
-        "exercise_heart_rate": 0,        # Placeholder
-        "perceived_exertion": 0,         # Placeholder
-        "symptoms": ["no"]               # Placeholder
-    }
-    return stage
-
-def prescribe_exercise_program(filename="exercise_program.json"):
-    stages = []
-    stage_number = 1
-    print("=== 📝 Exercise Prescription Input ===")
-
-    while True:
-        stage = input_exercise_stage(stage_number)
-        stages.append(stage)
-        stage_number += 1
-
-        add_more = input("Add another stage? (yes/no): ").strip().lower()
-        if add_more != "yes":
-            break
-
-    with open(filename, 'w') as f:
-        json.dump(stages, f, indent=2)
-    print(f"\n✅ Program saved to '{filename}'")
-
-def load_preprogrammed_session(program_name, filename="preprogrammed_sessions.json"):
-    if not os.path.exists(filename):
-        print(f"❌ File not found: {filename}")
-        return None
-
-    with open(filename, 'r') as f:
-        all_programs = json.load(f)
-
-    if program_name not in all_programs:
-        print(f"❌ Program '{program_name}' not found in '{filename}'")
-        return None
-
-    print(f"\n✅ Loaded '{program_name}' program from {filename}")
-    return all_programs[program_name]
-
-
-# -------------------- Session Execution --------------------
-
-def run_exercise_session(filename="exercise_program.json", target_heart_rate=110):
-    if not os.path.exists(filename):
-        print(f"❌ File not found: {filename}")
-        return
-
-    with open(filename, 'r') as f:
-        stages = json.load(f)
-
-    print("\n=== 🏃 Running Exercise Session ===")
-    resting_heart_rate = int(input("Enter resting heart rate (bpm): ").strip())
-
-    for i, stage in enumerate(stages, 1):
-        print(f"\n--- Stage {i}: {stage['stage_name'].capitalize()} ({stage['modality']}) ---")
-        print(f"Prescribed: {stage['duration']} minutes at {stage['intensity']}")
-
-        hr = int(input("Enter actual exercise heart rate: ").strip())
-        exertion = int(input("Enter perceived exertion (Borg scale 1–10): ").strip())
-        symptoms_input = input("Any symptoms? (comma-separated, or 'no'): ").strip().lower()
-        symptoms = [s.strip() for s in symptoms_input.split(",")]
-
-        stage["exercise_heart_rate"] = hr
-        stage["perceived_exertion"] = exertion
-        stage["symptoms"] = symptoms
-
-        result = check_progression(hr, target_heart_rate, exertion, symptoms)
-        print(f"🩺 Recommendation: {result}")
-
-    # Post-exercise check
-    print("\n=== 🧘 Post-Exercise Check ===")
-    post_hr = int(input("Post-exercise heart rate: "))
-    post_sys = int(input("Post-exercise systolic BP: "))
-    post_dia = int(input("Post-exercise diastolic BP: "))
-    post_glucose = int(input("Post-exercise glucose: "))
-    post_symptoms = input("Any symptoms post-exercise? (comma-separated, or 'no'): ").strip().lower()
-    post_symptoms_list = [s.strip() for s in post_symptoms.split(",")]
-
-    post_result = post_exercise_check(
-        post_hr, resting_heart_rate, post_sys, post_dia, post_glucose, post_symptoms_list
-    )
-
-    print(f"\n🩺 Final Recommendation: {post_result}")
-
-    with open("exercise_session_log.json", 'w') as f:
-        json.dump(stages, f, indent=2)
-
-    print("\n✅ Session log saved to 'exercise_session_log.json'")
-
-
-# -------------------- Main Runner --------------------
-
-if __name__ == "__main__":
-            print("\n📋 Welcome to the Monitored Exercise Session Tool")
-            print("1. Prescribe a new program")
-            print("2. Run a saved session")
-            print("3. Run a preprogrammed session\n")
-
-            choice = input("Select an option (1, 2, or 3): ").strip()
-
-            if choice == "1":
-                prescribe_exercise_program()
-
-            elif choice == "2":
-                target_hr = int(input("Enter target heart rate for session: "))
-                run_exercise_session(target_heart_rate=target_hr)
-
-            elif choice == "3":
-                print("\nAvailable Programs: beginner_program, advanced_program")
-                program_name = input("Enter the name of the preprogrammed session: ").strip()
-                target_hr = int(input("Enter target heart rate for session: "))
-                session_stages = load_preprogrammed_session(program_name)
-                if session_stages:
-                    # Save to temp file and run it
-                    with open("exercise_program.json", "w") as f:
-                        json.dump(session_stages, f, indent=2)
-                    run_exercise_session(target_heart_rate=target_hr)
-            else:
-                print("Invalid choice. Please restart the program.")
