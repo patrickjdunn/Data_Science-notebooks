@@ -1355,15 +1355,5 @@ CAD_QUESTIONS: List[Dict[str, Any]] = [
             },
         },
     },
-    {
-        "qid": "CAD-10",
-        "category": "CAD",
-        "question": "How do I stay motivated with heart-healthy habits?",
-        "behavioral_core": "PC",
-        "default_conditions": ["CD"],
-        "links": ["MYLIFECHECK"],
-        "answers": {
-            "Listener": {
-                "text": "Staying motivated is hard—we all need encouragement.",
-                "action_step":_
+]   
 
