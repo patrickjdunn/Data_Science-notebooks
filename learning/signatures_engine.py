@@ -451,15 +451,15 @@ def prompt_signatures_input() -> SignaturesInput:
         while True:
             raw = input("Value (-1, 0, 1): ").strip()
             if raw == "":
-                print("⚠️ Please enter -1, 0, or 1.")
+                print(" Please enter -1, 0, or 1.")
                 continue
             try:
                 v = int(raw)
             except ValueError:
-                print("⚠️ Invalid. Enter -1, 0, or 1.")
+                print(" Invalid. Enter -1, 0, or 1.")
                 continue
             if v not in (-1, 0, 1):
-                print("⚠️ Must be -1, 0, or 1.")
+                print(" Must be -1, 0, or 1.")
                 continue
             drivers[d] = v
             break
@@ -493,8 +493,8 @@ def main() -> int:
     # Gentle notes if clinical inputs couldn't be reused
     clinical = extract_clinical_inputs(calc_mod)
     if not clinical:
-        print("\n⚠️ NOTE: No clinical inputs found in combined_calculator.py.")
-        print("To reuse values automatically, expose one of these in combined_calculator.py:")
+        #print("\n NOTE: No clinical inputs found in combined_calculator.py.")
+        #print("To reuse values automatically, expose one of these in combined_calculator.py:")
         print("- INPUTS = {...}   (dict)")
         print("- inputs = {...}   (dict)")
         print("- def get_inputs(): return {...}")
