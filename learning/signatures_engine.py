@@ -32,7 +32,7 @@ import sys
 # -----------------------------
 
 # Default to the uploaded filename (works even with spaces/parentheses)
-CALCULATOR_PATH = Path("/mnt/data/combined_calculator (6).py")  # :contentReference[oaicite:1]{index=1}
+CALCULATOR_PATH = Path(__file__).parent / "combined_calculator.py" # :contentReference[oaicite:1]{index=1}
 CALCULATOR_MODULE_NAME = "combined_calculator_runtime"
 
 
