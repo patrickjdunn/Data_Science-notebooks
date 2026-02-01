@@ -1,276 +1,330 @@
+# signatures_engine.py
 """
-signatures_engine.py
+Signatures Engine (CLI)
 
-CLI engine for:
-- selecting persona
-- choosing a preloaded question (by number or ID)
-- searching questions
-- entering a custom question
-- printing structured output
+Design goals:
+- Keep the clean, simple input experience:
+  1) Choose persona (Listener/Motivator/Director/Expert)
+  2) Choose preloaded question OR enter custom
+  3) (Optionally) run combined_calculator prompts once, and reuse its inputs/outputs
+- Add Signatures fundamentals:
+  - Behavioral core
+  - Condition modifiers
+  - Engagement drivers
+  - Security rules
+  - Action plans
+- Add MyLifeCheck + PREVENT hooks (from combined_calculator.py outputs)
+- Add robust question bank browsing + search mode
+- Be LLM-friendly: optionally emit JSON output structure
 
-Designed to be resilient:
-- missing persona responses are auto-filled in questions.py
-- IDs are auto-generated if missing
+Folder expectation:
+- Put this file in: hi5304-notebooks/learning/signatures_engine.py
+- Put questions.py, signatures_content.py, signatures_rules.py in same folder
+- Put combined_calculator.py in same folder (your existing file)
 """
 
 from __future__ import annotations
-from typing import Any, Dict, Optional, List
 
+import json
+import os
 import sys
+import textwrap
+import importlib.util
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
 from questions import (
-    PERSONAS,
+    Question,
     all_categories,
-    list_questions,
-    list_question_summaries,
-    valid_ids,
     get_question_by_id,
+    list_question_summaries,
     search_questions,
     validate_question_bank,
 )
 
-
-# ---------------------------------------------------------------------
-# Small formatting helpers
-# ---------------------------------------------------------------------
-
-def _safe(s: Any) -> str:
-    return "" if s is None else str(s).strip()
+from signatures_rules import build_signatures_output, render_signatures_output
 
 
-def choose_persona() -> str:
-    print("\nChoose a communication style:")
-    for i, p in enumerate(PERSONAS, start=1):
-        print(f"{i}. {p}")
-    raw = input("Enter 1-4 (default 1): ").strip()
+PERSONAS = ["Listener", "Motivator", "Director", "Expert"]
+
+
+# -----------------------------
+# Calculator integration (safe)
+# -----------------------------
+
+def import_calculator_module() -> Optional[Any]:
+    """
+    Imports combined_calculator.py from the same directory as this file.
+    Uses importlib so users don't need to modify PYTHONPATH.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidate = os.path.join(here, "combined_calculator.py")
+    if not os.path.exists(candidate):
+        # Also allow "combined_calculator (6).py" renamed incorrectly
+        # (won't auto-import that; just help the user)
+        return None
+
+    spec = importlib.util.spec_from_file_location("combined_calculator", candidate)
+    if spec is None or spec.loader is None:
+        return None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def run_calculators_once(calc_mod: Any) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """
+    Runs combined_calculator in a flexible way.
+
+    Returns:
+      inputs_used: dict
+      results: dict
+    """
+    # Try common function names in a non-breaking way.
+    # You can adapt these names to match your combined_calculator.py.
+    inputs_used: Dict[str, Any] = {}
+    results: Dict[str, Any] = {}
+
+    # 1) If module offers a single runner that returns (inputs, results)
+    for fn_name in ("run_all", "run", "main_run"):
+        fn = getattr(calc_mod, fn_name, None)
+        if callable(fn):
+            out = fn()
+            if isinstance(out, tuple) and len(out) == 2:
+                inputs_used, results = out  # type: ignore
+                return inputs_used or {}, results or {}
+            if isinstance(out, dict):
+                results = out
+                return {}, results
+
+    # 2) If module offers prompt_inputs + calculate_all
+    prompt_fn = None
+    for fn_name in ("prompt_inputs", "prompt_user_inputs", "get_user_inputs"):
+        if callable(getattr(calc_mod, fn_name, None)):
+            prompt_fn = getattr(calc_mod, fn_name)
+            break
+
+    calc_fn = None
+    for fn_name in ("calculate_all", "calculate", "compute_all"):
+        if callable(getattr(calc_mod, fn_name, None)):
+            calc_fn = getattr(calc_mod, fn_name)
+            break
+
+    if prompt_fn and calc_fn:
+        inputs_used = prompt_fn() or {}
+        results = calc_fn(inputs_used) or {}
+        return inputs_used, results
+
+    # 3) If module already exposes results builders without prompts
+    #    (we won't force anything; keep safe)
+    return {}, {}
+
+
+# -----------------------------
+# CLI helpers (keep clean)
+# -----------------------------
+
+def ask_choice(prompt: str, choices: List[str], default_index: int = 0) -> str:
+    print(prompt)
+    for i, c in enumerate(choices, start=1):
+        print(f"{i}. {c}")
+    raw = input(f"Enter 1-{len(choices)} (default {default_index+1}): ").strip()
     if not raw:
-        return PERSONAS[0]
+        return choices[default_index]
     try:
         idx = int(raw)
-        if 1 <= idx <= len(PERSONAS):
-            return PERSONAS[idx - 1]
+        if 1 <= idx <= len(choices):
+            return choices[idx - 1]
     except ValueError:
         pass
-    print("⚠️ Invalid choice. Defaulting to Listener.")
-    return PERSONAS[0]
+    print("⚠️ Invalid choice. Using default.")
+    return choices[default_index]
 
 
-def print_question_list(items: List[Dict[str, str]], max_items: int = 70) -> None:
-    print("\nPreloaded Questions:")
-    if not items:
-        print("⚠️ No questions available.")
-        return
-
-    for i, item in enumerate(items[:max_items], start=1):
-        cat = item.get("category", "GENERAL")
-        qid = item.get("id", "NO-ID")
-        qtxt = item.get("question", "").strip() or "(missing question text)"
-        print(f"{i:2d}. [{cat}] {qid} — {qtxt}")
-
-    if len(items) > max_items:
-        print(f"... ({len(items) - max_items} more not shown)")
+def ask_yes_no(prompt: str, default_yes: bool = True) -> bool:
+    suffix = " (Y/n): " if default_yes else " (y/N): "
+    raw = input(prompt + suffix).strip().lower()
+    if not raw:
+        return default_yes
+    return raw in ("y", "yes")
 
 
-def pick_preloaded_question() -> Optional[Dict[str, Any]]:
-    # Category filter
-    raw_cat = input("Optional: type a category to filter (or press Enter to show all): ").strip()
-    category = raw_cat.upper() if raw_cat else None
+def print_header(title: str) -> None:
+    print("\n" + "=" * 70)
+    print(title)
+    print("=" * 70 + "\n")
 
-    items = list_question_summaries()
-    if category:
-        filtered = [x for x in items if x.get("category", "").upper() == category]
-        if not filtered:
-            print("⚠️ No questions found for that filter. Showing all.")
+
+def wrap(s: str, width: int = 78) -> str:
+    return "\n".join(textwrap.wrap(s, width=width))
+
+
+# -----------------------------
+# Question selection modes
+# -----------------------------
+
+def pick_preloaded_question() -> Question:
+    """
+    Clean selection:
+    - optional category filter
+    - optional search mode
+    - pick by number (1..N) or by ID
+    """
+    cat_filter = input(
+        f"Optional: type a category to filter (or press Enter to show all)\n"
+        f"Available: {', '.join(all_categories())}\n> "
+    ).strip()
+
+    mode = input(
+        "Pick mode: (L)ist / (S)earch / (I)D (default L): "
+    ).strip().lower() or "l"
+
+    if mode.startswith("s"):
+        query = input("Search query (keywords): ").strip()
+        results = search_questions(query=query, category=cat_filter or None, limit=50)
+        if not results:
+            print("⚠️ No matches. Falling back to list.")
+            mode = "l"
         else:
-            items = filtered
+            print("\nSearch Results:")
+            for i, item in enumerate(results, start=1):
+                print(f"{i:>2}. [{item.category}] {item.id} — {item.question}")
+            pick = input("\nEnter number or ID: ").strip()
+            q = resolve_pick(pick, results)
+            if q:
+                return q
+            print("⚠️ Not found. Falling back to list.")
+            mode = "l"
 
-    print_question_list(items)
+    if mode.startswith("i"):
+        pick_id = input("Enter question ID (e.g., HTN-01): ").strip().upper()
+        q = get_question_by_id(pick_id)
+        if q:
+            return q
+        print("⚠️ Not found. Falling back to list.")
 
+    # default list mode
+    items = list_question_summaries(category=cat_filter or None, limit=200)
     if not items:
+        print("⚠️ No questions found for that filter. Showing all.")
+        items = list_question_summaries(category=None, limit=200)
+
+    print("\nPreloaded Questions:")
+    for i, item in enumerate(items, start=1):
+        print(f"{i:>2}. [{item.category}] {item.id} — {item.question}")
+
+    pick = input("\nEnter number or ID: ").strip()
+    q = resolve_pick(pick, items)
+    if q:
+        return q
+
+    # If still not resolved, keep asking (clean UX)
+    while True:
+        pick = input("⚠️ Not found. Enter a valid number or ID shown above: ").strip()
+        q = resolve_pick(pick, items)
+        if q:
+            return q
+
+
+def resolve_pick(pick: str, items: List[Question]) -> Optional[Question]:
+    if not pick:
         return None
-
-    print("\nPick by:")
-    print(" - number (e.g., 1)")
-    print(" - ID (e.g., CKM-01)")
-    choice = input("Enter selection: ").strip()
-
-    if not choice:
-        return None
-
-    # Number selection
-    if choice.isdigit():
-        idx = int(choice)
+    p = pick.strip()
+    # Number?
+    try:
+        idx = int(p)
         if 1 <= idx <= len(items):
-            qid = items[idx - 1]["id"]
-            return get_question_by_id(qid)
-        print("⚠️ Number out of range.")
-        return None
-
-    # ID selection
-    q = get_question_by_id(choice)
-    if q:
-        return q
-
-    # If not found, show valid IDs and suggest
-    print("⚠️ Not found. Here are a few valid IDs:")
-    print(", ".join(valid_ids(category=category)[:20]))
-    return None
+            return items[idx - 1]
+    except ValueError:
+        pass
+    # ID?
+    return get_question_by_id(p.upper())
 
 
-def search_mode() -> Optional[Dict[str, Any]]:
-    print("\nSearch Mode")
-    raw_cat = input("Optional category filter (or press Enter for all): ").strip()
-    category = raw_cat.upper() if raw_cat else None
+def prompt_custom_question() -> Question:
+    """
+    Minimal custom question object. The Signatures engine can still run:
+    - It will use generic Signatures tags (behavioral core = "GEN")
+    - You can add tags later
+    """
+    qtext = input("Enter your question: ").strip()
+    if not qtext:
+        qtext = "How do I start an exercise program?"
 
-    query = input("Enter keyword(s) to search: ").strip()
-    if not query:
-        print("⚠️ No keywords entered.")
-        return None
-
-    matches = search_questions(query=query, category=category, limit=50)
-    if not matches:
-        print("⚠️ No matches found.")
-        return None
-
-    print_question_list(matches, max_items=50)
-    choice = input("Select by number or ID (or press Enter to cancel): ").strip()
-    if not choice:
-        return None
-
-    if choice.isdigit():
-        idx = int(choice)
-        if 1 <= idx <= len(matches):
-            return get_question_by_id(matches[idx - 1]["id"])
-        print("⚠️ Number out of range.")
-        return None
-
-    q = get_question_by_id(choice)
-    if q:
-        return q
-
-    print("⚠️ Not found.")
-    return None
+    # Create a lightweight Question instance (not stored in bank)
+    return Question(
+        id="CUSTOM-01",
+        category="CUSTOM",
+        question=qtext,
+        responses={},  # no persona responses; engine will fall back to core messages
+        action_step="Write down one small next step you can do today.",
+        why="Small steps build momentum and confidence.",
+        signatures_tags={
+            "behavioral_core": ["GEN"],
+            "condition_modifiers": [],
+            "engagement_drivers": [],
+        },
+        security_rule_codes=[],
+        action_plan_codes=[],
+        sources=[],
+    )
 
 
-def render_output(persona: str, question_obj: Dict[str, Any]) -> None:
-    q_text = _safe(question_obj.get("question"))
-    responses = question_obj.get("responses", {}) or {}
-    persona_msg = _safe(responses.get(persona))
-
-    action_step = _safe(question_obj.get("action_step"))
-    why = _safe(question_obj.get("why_it_matters"))
-    source_title = _safe(question_obj.get("source_title"))
-    source_url = _safe(question_obj.get("source_url"))
-
-    print("\n" + "=" * 72)
-    print("SIGNATURES OUTPUT")
-    print("=" * 72)
-    print(f"Persona: {persona}")
-    print(f"Question: {q_text}\n")
-
-    print("Response:")
-    print(persona_msg if persona_msg else "(no response available)")
-
-    if action_step:
-        print("\nAction Step:")
-        print(action_step)
-    if why:
-        print("\nWhy it matters:")
-        print(why)
-
-    if source_title or source_url:
-        print("\nSource:")
-        if source_title:
-            print(f"- {source_title}")
-        if source_url:
-            print(f"- {source_url}")
-
-    # Optional: signatures metadata
-    sig = question_obj.get("signatures")
-    if isinstance(sig, dict) and sig:
-        print("\nSignatures Tags:")
-        for k, v in sig.items():
-            print(f"- {k}: {v}")
-
-    print("=" * 72 + "\n")
-
-
-def custom_question_flow(persona: str) -> None:
-    q_text = input("\nEnter your custom question: ").strip()
-    if not q_text:
-        print("⚠️ No question entered.")
-        return
-
-    # Basic generic response if custom
-    print("\n" + "=" * 72)
-    print("SIGNATURES OUTPUT (CUSTOM QUESTION)")
-    print("=" * 72)
-    print(f"Persona: {persona}")
-    print(f"Question: {q_text}\n")
-    print("Response:")
-    if persona == "Listener":
-        print("I hear you. What part of this feels most urgent or confusing right now?")
-    elif persona == "Motivator":
-        print("You’re taking a strong step by asking. Let’s pick one small action you can start this week.")
-    elif persona == "Director":
-        print("Here’s a simple next step: write down 1 goal, 1 barrier, and 1 action you can do today.")
-    else:
-        print("In general, evidence-based steps combine healthy habits, monitoring, and clinician guidance tailored to your risk.")
-    print("=" * 72 + "\n")
-
+# -----------------------------
+# Main
+# -----------------------------
 
 def main() -> None:
-    # Non-fatal validation check
+    # 1) Validate question bank (non-fatal)
     issues = validate_question_bank(raise_on_error=False)
     if issues:
         print("⚠️ Question bank issues detected (non-fatal). First 5:")
-        for x in issues[:5]:
-            print(f"- {x}")
+        for msg in issues[:5]:
+            print(f"- {msg}")
 
-    print("Signatures Engine")
+    print_header("Signatures Engine")
 
-    persona = choose_persona()
+    # 2) Persona selection (keep clean)
+    persona = ask_choice("Choose a communication style:", PERSONAS, default_index=0)
 
-    while True:
-        print("\nMenu:")
-        print("1) Choose a preloaded question")
-        print("2) Search mode (keyword search)")
-        print("3) Enter a custom question")
-        print("4) Show categories")
-        print("5) Quit")
+    # 3) Question selection (keep clean)
+    use_preloaded = ask_yes_no("Use a preloaded question?", default_yes=True)
+    if use_preloaded:
+        q = pick_preloaded_question()
+    else:
+        q = prompt_custom_question()
 
-        choice = input("Enter choice (1-5): ").strip()
+    # 4) Calculator outputs (MyLifeCheck + PREVENT etc.) — do NOT re-prompt elsewhere
+    calc_mod = import_calculator_module()
+    calc_inputs: Dict[str, Any] = {}
+    calc_results: Dict[str, Any] = {}
+    if calc_mod:
+        try:
+            calc_inputs, calc_results = run_calculators_once(calc_mod)
+        except Exception as e:
+            print(f"⚠️ Calculator error (continuing without scores): {e}")
+    else:
+        print("ℹ️ combined_calculator.py not found in this folder. Scores will be skipped.")
 
-        if choice == "1":
-            use_preloaded = input("Use a preloaded question? (Y/n): ").strip().lower()
-            if use_preloaded in ("", "y", "yes"):
-                q = pick_preloaded_question()
-                if q:
-                    render_output(persona, q)
+    # 5) Build Signatures output object (LLM-friendly)
+    output = build_signatures_output(
+        question=q,
+        persona=persona,
+        calculator_inputs=calc_inputs,
+        calculator_results=calc_results,
+    )
 
-        elif choice == "2":
-            q = search_mode()
-            if q:
-                render_output(persona, q)
+    # 6) Render for CLI
+    render_signatures_output(output)
 
-        elif choice == "3":
-            custom_question_flow(persona)
-
-        elif choice == "4":
-            print("\nCategories:")
-            print(", ".join(all_categories()))
-
-        elif choice == "5":
-            print("Goodbye.")
-            return
-
-        else:
-            print("⚠️ Invalid selection.")
+    # 7) Optional JSON emit (LLM-friendly)
+    if ask_yes_no("\nOutput JSON too?", default_yes=False):
+        print("\n--- JSON OUTPUT ---")
+        print(json.dumps(output, indent=2))
 
 
 if __name__ == "__main__":
     main()
-
 
 
 
