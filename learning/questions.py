@@ -6,12 +6,13 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional, Tuple
 
+PERSONAS = ("Listener", "Motivator", "Director", "Expert")
 
 # -----------------------------
 # AHA + tool links (stable pages)
 # -----------------------------
 AHA_LINKS: Dict[str, Dict[str, str]] = {
-    # Core “hooks”
+    # Core hooks
     "MYLIFECHECK": {
         "org": "American Heart Association",
         "title": "My Life Check — Life’s Essential 8",
@@ -34,7 +35,7 @@ AHA_LINKS: Dict[str, Dict[str, str]] = {
     },
     "BP_CHART": {
         "org": "American Heart Association",
-        "title": "Blood Pressure Chart",
+        "title": "Understanding Blood Pressure Readings",
         "url": "https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings",
     },
     "DASH": {
@@ -60,18 +61,8 @@ AHA_LINKS: Dict[str, Dict[str, str]] = {
 }
 
 
-# -----------------------------
-# Helpers: normalized access
-# -----------------------------
-PERSONAS = ("Listener", "Motivator", "Director", "Expert")
-
-
 def _norm(s: str) -> str:
     return (s or "").strip()
-
-
-def _norm_upper(s: str) -> str:
-    return _norm(s).upper()
 
 
 def _mk_answer(text: str, action_step: str, why_it_matters: str) -> Dict[str, str]:
@@ -83,7 +74,6 @@ def _mk_answer(text: str, action_step: str, why_it_matters: str) -> Dict[str, st
 
 
 def _mk_question(
-    qid: str,
     category: str,
     question: str,
     behavioral_core: str,
@@ -91,18 +81,41 @@ def _mk_question(
     default_drivers: Optional[Dict[str, int]] = None,
     links: Optional[List[str]] = None,
     answers: Optional[Dict[str, Dict[str, str]]] = None,
+    qid: Optional[str] = None,
 ) -> Dict[str, Any]:
-    q = {
-        "id": _norm_upper(qid),
-        "category": _norm_upper(category),
+    """
+    Note: qid is optional. If omitted, IDs will be auto-assigned via assign_ids().
+    """
+    cat = _norm(category).upper()
+    return {
+        "id": _norm(qid).upper() if qid else "",
+        "category": cat,
         "question": _norm(question),
-        "behavioral_core": _norm_upper(behavioral_core),
+        "behavioral_core": _norm(behavioral_core).upper(),
         "default_conditions": default_conditions or [],
         "default_drivers": default_drivers or {},
         "answers": answers or {},
         "sources": [AHA_LINKS[k] for k in (links or []) if k in AHA_LINKS],
     }
-    return q
+
+
+def assign_ids(questions: List[Dict[str, Any]], category: str, prefix: Optional[str] = None, start: int = 1) -> List[Dict[str, Any]]:
+    """
+    Ensures each question has a stable ID like CKM-01, CKM-02, ...
+    If an ID already exists, it is preserved (and normalized).
+    """
+    cat = (category or "GEN").upper()
+    pfx = (prefix or cat).upper()
+    n = start
+
+    for q in questions:
+        q["category"] = cat
+        if not q.get("id"):
+            q["id"] = f"{pfx}-{n:02d}"
+            n += 1
+        else:
+            q["id"] = str(q["id"]).upper().strip()
+    return questions
 
 
 # -----------------------------
@@ -110,7 +123,6 @@ def _mk_question(
 # -----------------------------
 CKM_QUESTIONS: List[Dict[str, Any]] = [
     _mk_question(
-        "CKM-01",
         "CKM",
         "What does my diagnosis mean for my future?",
         behavioral_core="PC",
@@ -140,7 +152,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-02",
         "CKM",
         "What can I eat—and what should I avoid?",
         behavioral_core="NUT",
@@ -170,7 +181,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-03",
         "CKM",
         "Why am I on so many medications?",
         behavioral_core="MA",
@@ -200,7 +210,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-04",
         "CKM",
         "How do I know if my condition is getting better or worse?",
         behavioral_core="SY",
@@ -230,7 +239,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-05",
         "CKM",
         "Will I need dialysis or heart surgery?",
         behavioral_core="PC",
@@ -260,7 +268,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-06",
         "CKM",
         "Can I still exercise?",
         behavioral_core="PA",
@@ -290,7 +297,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-07",
         "CKM",
         "What’s a healthy blood pressure for me?",
         behavioral_core="BP",
@@ -320,7 +326,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-08",
         "CKM",
         "How can I manage this and still live my life?",
         behavioral_core="PC",
@@ -350,7 +355,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-09",
         "CKM",
         "Are my heart, kidneys, and diabetes connected?",
         behavioral_core="HL",
@@ -380,7 +384,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "CKM-10",
         "CKM",
         "How do I avoid going back to the hospital?",
         behavioral_core="PC",
@@ -411,6 +414,8 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
     ),
 ]
 
+CKM_QUESTIONS = assign_ids(CKM_QUESTIONS, category="CKM", prefix="CKM", start=1)
+
 
 # -----------------------------
 # High blood pressure question set (10)
@@ -418,7 +423,6 @@ CKM_QUESTIONS: List[Dict[str, Any]] = [
 # -----------------------------
 HTN_QUESTIONS: List[Dict[str, Any]] = [
     _mk_question(
-        "HTN-01",
         "HTN",
         "What should my blood pressure goal be?",
         behavioral_core="BP",
@@ -448,7 +452,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-02",
         "HTN",
         "Do I really need medication?",
         behavioral_core="MA",
@@ -478,7 +481,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-03",
         "HTN",
         "What can I do besides taking medication?",
         behavioral_core="PC",
@@ -508,7 +510,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-04",
         "HTN",
         "What kind of diet should I follow?",
         behavioral_core="NUT",
@@ -538,7 +539,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-05",
         "HTN",
         "Will I have high blood pressure forever?",
         behavioral_core="PC",
@@ -568,7 +568,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-06",
         "HTN",
         "How can I track my blood pressure at home?",
         behavioral_core="SY",
@@ -598,7 +597,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-07",
         "HTN",
         "Can stress really affect my blood pressure?",
         behavioral_core="PC",
@@ -628,7 +626,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-08",
         "HTN",
         "What’s a dangerous blood pressure level?",
         behavioral_core="HL",
@@ -658,7 +655,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-09",
         "HTN",
         "Is low blood pressure a problem too?",
         behavioral_core="SY",
@@ -688,7 +684,6 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
         },
     ),
     _mk_question(
-        "HTN-10",
         "HTN",
         "How do I talk to my family about my high blood pressure?",
         behavioral_core="PC",
@@ -719,10 +714,11 @@ HTN_QUESTIONS: List[Dict[str, Any]] = [
     ),
 ]
 
+HTN_QUESTIONS = assign_ids(HTN_QUESTIONS, category="HTN", prefix="HTN", start=1)
+
 
 # -----------------------------
-# Placeholders for future expansion
-# (keeps imports stable even before you load more sets)
+# Future placeholders (safe imports even if empty)
 # -----------------------------
 HF_QUESTIONS: List[Dict[str, Any]] = []
 CAD_QUESTIONS: List[Dict[str, Any]] = []
@@ -731,9 +727,6 @@ STROKE_QUESTIONS: List[Dict[str, Any]] = []
 DIABETES_QUESTIONS: List[Dict[str, Any]] = []
 
 
-# -----------------------------
-# Final exported bank
-# -----------------------------
 QUESTION_BANK: List[Dict[str, Any]] = (
     CKM_QUESTIONS
     + HTN_QUESTIONS
@@ -746,10 +739,10 @@ QUESTION_BANK: List[Dict[str, Any]] = (
 
 
 # -----------------------------
-# Public API used by signatures_engine.py
+# Public API (used by signatures_engine.py)
 # -----------------------------
 def list_categories() -> List[str]:
-    return sorted({q.get("category", "UNKNOWN") for q in QUESTION_BANK})
+    return sorted({(q.get("category") or "UNKNOWN").upper() for q in QUESTION_BANK})
 
 
 def list_question_summaries(category: Optional[str] = None) -> List[Tuple[str, str, str]]:
@@ -757,47 +750,41 @@ def list_question_summaries(category: Optional[str] = None) -> List[Tuple[str, s
     Returns: [(id, category, question), ...]
     If category is provided, filters case-insensitively.
     """
-    cat = _norm_upper(category) if category else None
-    items = []
+    cat = category.strip().upper() if category else None
+    items: List[Tuple[str, str, str]] = []
     for q in QUESTION_BANK:
-        if cat and _norm_upper(q.get("category", "")) != cat:
+        qcat = (q.get("category") or "").upper()
+        if cat and qcat != cat:
             continue
         items.append((q.get("id", ""), q.get("category", ""), q.get("question", "")))
     return items
 
 
+def filter_questions_by_category(category: str) -> List[Dict[str, Any]]:
+    cat = (category or "").strip().upper()
+    return [q for q in QUESTION_BANK if (q.get("category") or "").upper() == cat]
+
+
 def get_question(question_id: str) -> Optional[Dict[str, Any]]:
-    """
-    Fetch a question dict by its ID (case-insensitive).
-    """
-    qid = _norm_upper(question_id)
+    qid = (question_id or "").strip().upper()
     for q in QUESTION_BANK:
-        if _norm_upper(q.get("id", "")) == qid:
+        if (q.get("id") or "").upper() == qid:
             return q
     return None
 
 
-def filter_questions_by_category(category: str) -> List[Dict[str, Any]]:
-    cat = _norm_upper(category)
-    return [q for q in QUESTION_BANK if _norm_upper(q.get("category", "")) == cat]
-
-
 def validate_question_bank(raise_on_error: bool = False) -> List[str]:
-    """
-    Lightweight validation to prevent “Not found” surprises.
-    Returns a list of issues (empty = OK).
-    """
     issues: List[str] = []
-    seen_ids = set()
+    seen = set()
 
     for i, q in enumerate(QUESTION_BANK):
         qid = q.get("id", "")
         if not qid:
             issues.append(f"[{i}] Missing id")
+        elif qid in seen:
+            issues.append(f"Duplicate id: {qid}")
         else:
-            if qid in seen_ids:
-                issues.append(f"Duplicate id: {qid}")
-            seen_ids.add(qid)
+            seen.add(qid)
 
         if not q.get("category"):
             issues.append(f"{qid}: Missing category")
@@ -812,5 +799,6 @@ def validate_question_bank(raise_on_error: bool = False) -> List[str]:
     if raise_on_error and issues:
         raise ValueError("Question bank validation failed:\n" + "\n".join(issues))
     return issues
+
 
 

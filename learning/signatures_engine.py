@@ -1,542 +1,500 @@
-"""
-signatures_engine.py (refactored)
-
-- Persona selection (Listener / Motivator / Director / Expert)
-- Preloaded question bank lives in: questions.py
-- Ability to pull up a specific question by ID (e.g., CKM-01, HBP-03)
-- Auto-fill behavioral core + default condition modifiers/drivers from question bank
-- Reuse clinical inputs from combined_calculator.py (no re-entry)
-- Optional calculators (run only if functions exist + inputs available)
-
-Folder layout expected:
-learning/
-  signatures_engine.py
-  combined_calculator.py
-  questions.py
-"""
+# signatures_engine.py
+# Runs the Signatures question flow + persona messaging.
+# Place this file in: hi5304-notebooks/learning/signatures_engine.py
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Literal
+import os
+import sys
 import importlib.util
-import json
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple
 
-# -----------------------------
-# Question bank import (moved to questions.py)
-# -----------------------------
 from questions import (
-    PreloadedQuestion,
-    PersonaAnswer,
-    Persona,
+    PERSONAS,
     QUESTION_BANK,
-    list_questions,
+    list_categories,
+    list_question_summaries,
+    filter_questions_by_category,
     get_question,
-    AHA_LINKS,
+    validate_question_bank,
 )
 
-# -----------------------------
-# 0) Calculator module loading
-# -----------------------------
-
-CALCULATOR_PATH = Path(__file__).parent / "combined_calculator.py"
-CALCULATOR_MODULE_NAME = "combined_calculator_runtime"
-
-
-def import_module_from_path(path: Path, module_name: str):
-    if not path.exists():
-        raise FileNotFoundError(f"Calculator module not found at: {path}")
-    spec = importlib.util.spec_from_file_location(module_name, str(path))
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Could not create import spec for: {path}")
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)  # type: ignore[attr-defined]
-    return mod
+# ---------------------------------------
+# Optional calculator integration
+# (works even if combined_calculator.py is absent)
+# ---------------------------------------
+CALCULATOR_FILENAME = "combined_calculator.py"  # same folder as this engine
 
 
-# -----------------------------
-# 1) Persona + Signatures input model
-# -----------------------------
+def _load_calculator_module() -> Optional[Any]:
+    """
+    Attempts to import combined_calculator.py from the current directory.
+    Returns module or None.
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    path = os.path.join(here, CALCULATOR_FILENAME)
+    if not os.path.exists(path):
+        return None
 
-PERSONA_CHOICES: Dict[str, Persona] = {
-    "1": "Listener",
-    "2": "Motivator",
-    "3": "Director",
-    "4": "Expert",
-    "L": "Listener",
-    "M": "Motivator",
-    "D": "Director",
-    "E": "Expert",
-}
-
-DRIVER_CODES = {"PR", "RC", "SE", "GO", "ID", "HL", "DS", "TR", "FI", "HI", "AX"}
+    try:
+        spec = importlib.util.spec_from_file_location("combined_calculator", path)
+        if spec is None or spec.loader is None:
+            return None
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)  # type: ignore[attr-defined]
+        return module
+    except Exception as e:
+        print(f"⚠️ Calculator module found but failed to import: {e}")
+        return None
 
 
+CALC = _load_calculator_module()
+
+
+# ---------------------------------------
+# Signatures structures
+# ---------------------------------------
 @dataclass
 class SignaturesInput:
-    question: str
-    persona: Persona
-    behavioral_core: str                 # e.g. "PA", "BP", "NUT", "MA", "PC", "HL"
-    condition_modifiers: Dict[str, int]  # 0/1
-    engagement_drivers: Dict[str, int]   # -1/0/+1
-
-
-def normalize_codes(si: SignaturesInput) -> Dict[str, int]:
-    codes: Dict[str, int] = {}
-    codes[si.behavioral_core] = 1
-
-    for c, v in si.condition_modifiers.items():
-        codes[c] = 1 if int(v) == 1 else 0
-
-    for d, v in si.engagement_drivers.items():
-        if v not in (-1, 0, 1):
-            raise ValueError(f"Driver {d} must be -1, 0, or 1; got {v}")
-        codes[d] = v
-
-    return codes
-
-
-# -----------------------------
-# 2) Payload model
-# -----------------------------
-
-@dataclass
-class MeasurementResults:
-    mylifecheck: Optional[Dict[str, Any]] = None
-    prevent: Optional[Dict[str, Any]] = None
-    chads2vasc: Optional[Dict[str, Any]] = None
-    cardiac_rehab: Optional[Dict[str, Any]] = None
-    healthy_day_at_home: Optional[Dict[str, Any]] = None
-
-
-@dataclass
-class SignaturesPayload:
-    question: str
-    persona: Persona
-    codes: Dict[str, int]
+    persona: str
+    question_text: str
     behavioral_core: str
-    active_conditions: List[str]
-    active_drivers: List[str]
-
-    # Canonical structural outputs
-    behavioral_core_messages: List[str] = field(default_factory=list)
-    condition_modifier_messages: List[str] = field(default_factory=list)
-    engagement_driver_messages: List[str] = field(default_factory=list)
-    security_rules: List[str] = field(default_factory=list)
-    action_plans: List[str] = field(default_factory=list)
-
-    # Persona rendered answer (preloaded questions)
-    persona_output: List[str] = field(default_factory=list)
-
-    # Measurement + links
-    measurement: MeasurementResults = field(default_factory=MeasurementResults)
-    content_links: List[Dict[str, str]] = field(default_factory=list)
+    condition_modifiers: List[str]
+    engagement_drivers: Dict[str, int]  # -1/0/+1
+    # optional clinical inputs (may be empty)
+    values: Dict[str, Any]
 
 
-# -----------------------------
-# 3) Minimal canonical layer content (engine-side)
-#    (Preloaded persona answers live in questions.py)
-# -----------------------------
-
-BEHAVIOR_CORE_CANONICAL: Dict[str, str] = {
-    "PA": "Start with safe, manageable movement and build consistency. Walking is a great place to begin.",
-    "BP": "Know your numbers and track patterns over time. Small changes can add up to meaningful blood pressure improvement.",
-    "NUT": "Focus on simple, repeatable improvements—more whole foods, fewer ultra-processed foods, and mindful portions.",
-    "SL": "Aim for consistent sleep timing and a wind-down routine to support recovery and cardiometabolic health.",
-    "MA": "Medications work best when taken consistently. Pair doses with daily routines and keep an updated medication list.",
-    "SY": "Track symptoms and trends, not single moments. Write down what you notice and share patterns with your clinician.",
-    "SM": "Stress management is a health skill. Small daily practices can lower strain and support better decisions.",
-    "PC": "Build a simple plan you can repeat: track key measures, focus on one or two habits, and keep follow-ups consistent.",
-    "HL": "Let’s connect the dots in plain language: what’s happening, why it matters, and what you can do next.",
+# Simple dictionaries for extendability
+BEHAVIORAL_CORE_MESSAGES: Dict[str, Dict[str, str]] = {
+    "PC": {
+        "title": "Preventive Care & Self-Management",
+        "generic": "Focus on one or two habits you can sustain, track progress, and review results with your care team.",
+    },
+    "NUT": {
+        "title": "Nutrition",
+        "generic": "Choose a heart-healthy eating pattern, start with small swaps, and reduce highly processed foods and excess sodium.",
+    },
+    "MA": {
+        "title": "Medication Adherence",
+        "generic": "Take medications as prescribed, use reminders, and tell your clinician about side effects or barriers.",
+    },
+    "SY": {
+        "title": "Monitoring & Symptoms",
+        "generic": "Track key numbers/symptoms consistently, watch trends, and escalate care when red flags appear.",
+    },
+    "PA": {
+        "title": "Physical Activity",
+        "generic": "Start low and go slow—build a routine that is safe, consistent, and fits your current health status.",
+    },
+    "BP": {
+        "title": "Blood Pressure",
+        "generic": "Know your numbers, measure correctly, and work toward your clinician-recommended goal using lifestyle and medication as needed.",
+    },
+    "HL": {
+        "title": "Health Literacy",
+        "generic": "Ask for simple explanations, repeat-back what you heard, and use trusted sources to guide decisions.",
+    },
 }
 
-SECURITY_RULES: Dict[Tuple[str, Optional[str]], str] = {
-    ("PA", None): "SECURITY: If you feel faint, severely short of breath, or unwell during exercise, stop and seek medical guidance.",
-    ("PA", "CD"): "SECURITY: If you experience chest pain, pressure, or tightness during exercise, stop immediately and contact your healthcare professional.",
-    ("BP", None): "SECURITY: If your BP is 180/120 or higher with symptoms (chest pain, shortness of breath, weakness, vision/speech changes), seek emergency care.",
-    ("SY", None): "SECURITY: If you have sudden severe symptoms (new chest pain, one-sided weakness, trouble speaking, severe shortness of breath), seek urgent/emergency care.",
+# Condition modifier message add-ons (extend this freely)
+CONDITION_MODIFIER_MESSAGES: Dict[str, str] = {
+    "CKM": "Because CKM health connects heart, kidney, and metabolic risk, focus on actions that improve BP, glucose, weight, and kidney-friendly habits together.",
+    "HT": "For high blood pressure, prioritize accurate home monitoring, sodium reduction, activity, and medication adherence if prescribed.",
+    "CAD": "With coronary artery disease risk, start activity gradually and ask about cardiac rehab or a supervised plan if symptoms or history suggest higher risk.",
+    "HF": "With heart failure risk, watch for fluid symptoms (rapid weight gain, swelling, shortness of breath) and follow a sodium/fluid plan from your clinician.",
+    "AF": "With atrial fibrillation risk, ask about stroke prevention plans and safe exercise pacing; report palpitations or dizziness promptly.",
+    "ST": "After stroke risk/events, prioritize BP control, medication adherence, and rehab plans; safety and prevention are key.",
+    "DM": "With diabetes risk, align activity and nutrition with glucose monitoring, and ask how to prevent lows during exercise.",
+}
+
+# Engagement driver message add-ons (only applied when > 0)
+ENGAGEMENT_DRIVER_MESSAGES: Dict[str, str] = {
+    "PR": "Proactive framing: pick a small next step today and schedule a check-in to review progress.",
+    "HL": "Plain-language support: keep instructions simple, one step at a time, and use visuals/tools when possible.",
+    "SE": "Self-efficacy support: start with a goal you’re confident you can hit this week to build momentum.",
+    "GO": "Goal orientation: define a measurable goal and a review date (e.g., 2 weeks) to evaluate progress.",
+    "TR": "Trust support: bring questions to your clinician and confirm the plan aligns with your preferences and values.",
+}
+
+# Security rules (stop rules)
+SECURITY_RULES: Dict[str, str] = {
+    "EXERCISE_CHEST_PAIN_STOP": "If you experience chest pain during exercise, stop immediately and contact your healthcare professional.",
+}
+
+# Action plans
+ACTION_PLANS: Dict[str, str] = {
+    "CARDIAC_REHAB": "Action plan: Ask your clinician about a referral to cardiac rehabilitation (clinic-based or home-based). It provides supervised exercise, education, and coaching tailored to your condition.",
+}
+
+# Links to content (can be expanded)
+CONTENT_LINKS: Dict[str, Dict[str, str]] = {
+    "AHA_FITNESS": {
+        "org": "American Heart Association",
+        "title": "Fitness Basics",
+        "url": "https://www.heart.org/en/healthy-living/fitness",
+    },
+    "AHA_BP_READINGS": {
+        "org": "American Heart Association",
+        "title": "Understanding Blood Pressure Readings",
+        "url": "https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings",
+    },
+    "AHA_MYLIFECHECK": {
+        "org": "American Heart Association",
+        "title": "My Life Check — Life’s Essential 8",
+        "url": "https://www.heart.org/en/healthy-living/healthy-lifestyle/my-life-check--lifes-essential-8",
+    },
 }
 
 
-# -----------------------------
-# 4) Clinical inputs reuse (no re-entry)
-# -----------------------------
-
-def extract_clinical_inputs(calc_mod) -> Dict[str, Any]:
+# ---------------------------------------
+# Menu selection (prevents Not Found errors)
+# ---------------------------------------
+def choose_from_menu(items: List[Tuple[str, str, str]]) -> Optional[str]:
     """
-    Reuse inputs from combined_calculator.py if exposed:
-    - INPUTS (dict)
-    - inputs (dict)
-    - get_inputs() -> dict
-    - get_latest_inputs() -> dict
+    items: [(id, category, question), ...]
+    Returns selected id or None.
     """
-    for name in ("INPUTS", "inputs"):
-        if hasattr(calc_mod, name):
-            val = getattr(calc_mod, name)
-            if isinstance(val, dict):
-                return val
+    if not items:
+        print("⚠️ No questions available.")
+        return None
 
-    for fn_name in ("get_inputs", "get_latest_inputs"):
-        if hasattr(calc_mod, fn_name) and callable(getattr(calc_mod, fn_name)):
+    print("\nPreloaded Questions:")
+    for idx, (qid, cat, qtext) in enumerate(items, start=1):
+        print(f"{idx:>2}. [{cat}] {qid} — {qtext}")
+
+    while True:
+        choice = input("\nEnter a number (or press Enter to cancel): ").strip()
+        if choice == "":
+            return None
+        if not choice.isdigit():
+            print("⚠️ Please enter a valid number.")
+            continue
+        n = int(choice)
+        if 1 <= n <= len(items):
+            return items[n - 1][0]
+        print("⚠️ Number out of range.")
+
+
+def pick_preloaded_question() -> Optional[Dict[str, Any]]:
+    category = input("Optional: type a category to filter (or press Enter to show all): ").strip()
+    if category:
+        filtered = filter_questions_by_category(category)
+        if not filtered:
+            print("⚠️ No questions found for that filter. Showing all.")
+            items = list_question_summaries()
+        else:
+            items = [(q["id"], q["category"], q["question"]) for q in filtered]
+    else:
+        items = list_question_summaries()
+
+    selected_id = choose_from_menu(items)
+    if not selected_id:
+        return None
+
+    return get_question(selected_id)
+
+
+# ---------------------------------------
+# Persona selection
+# ---------------------------------------
+def prompt_persona() -> str:
+    print("\nChoose a communication style:")
+    for i, p in enumerate(PERSONAS, start=1):
+        print(f"{i}. {p}")
+    while True:
+        s = input("Enter 1-4 (default 1): ").strip()
+        if s == "":
+            return PERSONAS[0]
+        if s.isdigit() and 1 <= int(s) <= len(PERSONAS):
+            return PERSONAS[int(s) - 1]
+        print("⚠️ Please enter 1, 2, 3, or 4.")
+
+
+# ---------------------------------------
+# Optional clinical values:
+# pull from calculator if available; otherwise allow skip
+# ---------------------------------------
+def get_values_from_calculator_if_possible() -> Dict[str, Any]:
+    """
+    Tries to use combined_calculator.py if it exposes a function that returns inputs.
+    If not, returns {} and the rest of the engine still runs.
+    """
+    if CALC is None:
+        return {}
+
+    # Common patterns you might have in combined_calculator.py:
+    # - prompt_inputs()
+    # - get_inputs()
+    # - main() returning dict
+    for fn_name in ("prompt_inputs", "get_inputs", "collect_inputs", "prompt_user_inputs"):
+        fn = getattr(CALC, fn_name, None)
+        if callable(fn):
             try:
-                val = getattr(calc_mod, fn_name)()
-                if isinstance(val, dict):
-                    return val
-            except Exception:
-                pass
+                out = fn()
+                if isinstance(out, dict):
+                    return out
+            except Exception as e:
+                print(f"⚠️ Calculator inputs failed ({fn_name}): {e}")
+                return {}
 
     return {}
 
 
-def _call_if_exists(calc_mod, fn_name: str, *args, **kwargs) -> Optional[Any]:
-    if hasattr(calc_mod, fn_name) and callable(getattr(calc_mod, fn_name)):
-        return getattr(calc_mod, fn_name)(*args, **kwargs)
-    return None
+# ---------------------------------------
+# Driver prompting (optional, safe)
+# ---------------------------------------
+def prompt_engagement_drivers() -> Dict[str, int]:
+    """
+    Engagement drives: 0 = unknown, -1 = not present, +1 = present
+    Press Enter to keep default (0).
+    """
+    drivers = {"PR": 0, "HL": 0, "SE": 0, "GO": 0, "TR": 0}
+
+    print("\nEngagement Drivers (Enter = unknown/0). Use -1 (not present) or 1 (present).")
+    print("PR=Proactive, HL=Health Literacy, SE=Self-Efficacy, GO=Goal Orientation, TR=Trust")
+
+    for k in list(drivers.keys()):
+        while True:
+            raw = input(f"  {k} value (-1,0,1) [default 0]: ").strip()
+            if raw == "":
+                drivers[k] = 0
+                break
+            if raw in ("-1", "0", "1"):
+                drivers[k] = int(raw)
+                break
+            print("⚠️ Please enter -1, 0, 1, or press Enter.")
+    return drivers
 
 
-# -----------------------------
-# 5) Calculator calls (optional)
-# -----------------------------
-
-def run_mylifecheck(calc_mod, clinical: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    out = _call_if_exists(calc_mod, "run_mylifecheck", clinical)
-    if out is not None:
-        return out
-    return _call_if_exists(calc_mod, "calculate_mylifecheck", clinical)
-
-
-def run_prevent(calc_mod, clinical: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    out = _call_if_exists(calc_mod, "run_prevent", clinical)
-    if out is not None:
-        return out
-    return _call_if_exists(calc_mod, "calculate_prevent", clinical)
+def prompt_condition_modifiers(defaults: Optional[List[str]] = None) -> List[str]:
+    """
+    Simple comma-separated modifiers. Enter to accept defaults.
+    """
+    defaults = defaults or []
+    print("\nCondition Modifiers examples: CKM, HT, CAD, HF, AF, ST, DM")
+    d = ", ".join(defaults) if defaults else "(none)"
+    raw = input(f"Enter condition modifiers (comma-separated) [default: {d}]: ").strip()
+    if raw == "":
+        return defaults
+    mods = [m.strip().upper() for m in raw.split(",") if m.strip()]
+    return mods
 
 
-def run_chads2vasc(calc_mod, clinical: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    out = _call_if_exists(calc_mod, "run_chads2vasc", clinical)
-    if out is not None:
-        return out
-
-    if hasattr(calc_mod, "calculate_chads2vasc") and callable(calc_mod.calculate_chads2vasc):
-        try:
-            score = calc_mod.calculate_chads2vasc(
-                age=clinical.get("age"),
-                gender=clinical.get("gender"),
-                heart_failure=clinical.get("heart_failure", "No"),
-                hypertension=clinical.get("hypertension", "No"),
-                diabetes=clinical.get("diabetes", "No"),
-                stroke_or_tia=clinical.get("stroke_or_tia", "No"),
-                vascular_disease=clinical.get("vascular_disease", "No"),
-            )
-            return {"chads2vasc": score}
-        except Exception:
-            return None
-    return None
-
-
-def run_cardiac_rehab(calc_mod, clinical: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    out = _call_if_exists(calc_mod, "run_cardiac_rehab_eligibility", clinical)
-    if out is not None:
-        return out
-
-    if hasattr(calc_mod, "calculate_cardiac_rehab_eligibility") and callable(calc_mod.calculate_cardiac_rehab_eligibility):
-        try:
-            eligible = calc_mod.calculate_cardiac_rehab_eligibility(
-                CABG=clinical.get("CABG", "No"),
-                AMI=clinical.get("AMI", "No"),
-                PCI=clinical.get("PCI", "No"),
-                cardiac_arrest=clinical.get("cardiac_arrest", "No"),
-                heart_failure=clinical.get("heart_failure", "No"),
-            )
-            return {"cardiac_rehab_eligible": eligible}
-        except Exception:
-            return None
-    return None
-
-
-def run_healthy_day_at_home(calc_mod, clinical: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    out = _call_if_exists(calc_mod, "run_healthy_day_at_home", clinical)
-    if out is not None:
-        return out
-
-    if hasattr(calc_mod, "healthy_day_at_home") and callable(calc_mod.healthy_day_at_home):
-        try:
-            result = calc_mod.healthy_day_at_home(
-                symptoms=clinical.get("symptoms", 0),
-                step_count=clinical.get("step_count", 0),
-                unplanned_visits=clinical.get("unplanned_visits", 0),
-                medication_adherence=clinical.get("medication_adherence", 0),
-            )
-            if isinstance(result, tuple) and len(result) == 2:
-                score, note = result
-                return {"healthy_day_score": score, "healthy_day_message": note}
-            return {"healthy_day_at_home": result}
-        except Exception:
-            return None
-    return None
-
-
-# -----------------------------
-# 6) Hook routing
-# -----------------------------
-
-def should_run_mylifecheck(behavior: str, codes: Dict[str, int]) -> bool:
-    return behavior in {"PA", "BP", "NUT", "SL", "TOB", "PC"} or codes.get("CKM", 0) == 1
-
-def should_run_prevent(behavior: str, codes: Dict[str, int]) -> bool:
-    return any(codes.get(k, 0) == 1 for k in ("HT", "CD", "CKD", "CKM", "DM")) or behavior in {"PA", "BP", "PC"}
-
-def should_run_chads2vasc(codes: Dict[str, int], clinical: Dict[str, Any]) -> bool:
-    af = codes.get("AF", 0) == 1 or str(clinical.get("atrial_fibrillation", "")).strip().lower() in {"yes", "y", "true", "1"}
-    return af
-
-def should_run_cardiac_rehab(codes: Dict[str, int]) -> bool:
-    return codes.get("CD", 0) == 1 or codes.get("HF", 0) == 1
-
-def should_run_healthy_day(_: Dict[str, int]) -> bool:
-    return True
-
-
-# -----------------------------
-# 7) Assembly (preloaded persona answer + canonical + security + links)
-# -----------------------------
-
-def assemble_messages(payload: SignaturesPayload, preloaded: Optional[PreloadedQuestion]) -> None:
-    # Always include canonical behavioral core message (structure)
-    core_msg = BEHAVIOR_CORE_CANONICAL.get(payload.behavioral_core)
-    if core_msg:
-        payload.behavioral_core_messages.append(core_msg)
-
-    # If preloaded selected: render persona-specific answer + action + rationale
-    if preloaded and payload.persona in preloaded.answers:
-        ans = preloaded.answers[payload.persona]
-        payload.persona_output = [
-            f"{payload.persona} response to: {preloaded.question}",
-            ans.text,
-            "",
-            f"Action Step: {ans.action_step}",
-            f"Why it matters: {ans.why_it_matters}",
-        ]
-        payload.action_plans.append(f"ACTION: {ans.action_step}")
-
-        # Links from question bank (usually AHA)
-        for link in preloaded.links:
-            if link not in payload.content_links:
-                payload.content_links.append(link)
-
-    # Security rules (prefer condition-specific then generic)
-    added = False
-    for cond in payload.active_conditions:
-        rule = SECURITY_RULES.get((payload.behavioral_core, cond))
-        if rule:
-            payload.security_rules.append(rule)
-            added = True
-    if not added:
-        rule = SECURITY_RULES.get((payload.behavioral_core, None))
-        if rule:
-            payload.security_rules.append(rule)
-
-    # Always include Life’s Essential 8 link if present in AHA_LINKS
-    if "MYLIFECHECK" in AHA_LINKS:
-        if AHA_LINKS["MYLIFECHECK"] not in payload.content_links:
-            payload.content_links.append(AHA_LINKS["MYLIFECHECK"])
-
-
-# -----------------------------
-# 8) Build payload end-to-end
-# -----------------------------
-
-def build_payload(sig: SignaturesInput, calc_mod, preloaded: Optional[PreloadedQuestion]) -> SignaturesPayload:
-    codes = normalize_codes(sig)
-
-    active_conditions = [
-        k for k, v in codes.items()
-        if v == 1 and k.isupper() and k not in DRIVER_CODES and k != sig.behavioral_core
-    ]
-    active_drivers = [k for k, v in codes.items() if k in DRIVER_CODES and v > 0]
-
-    payload = SignaturesPayload(
-        question=sig.question,
-        persona=sig.persona,
-        codes=codes,
-        behavioral_core=sig.behavioral_core,
-        active_conditions=active_conditions,
-        active_drivers=active_drivers,
-    )
-
-    clinical = extract_clinical_inputs(calc_mod)
-
-    if should_run_mylifecheck(sig.behavioral_core, codes):
-        payload.measurement.mylifecheck = run_mylifecheck(calc_mod, clinical)
-
-    if should_run_prevent(sig.behavioral_core, codes):
-        payload.measurement.prevent = run_prevent(calc_mod, clinical)
-
-    if should_run_chads2vasc(codes, clinical):
-        payload.measurement.chads2vasc = run_chads2vasc(calc_mod, clinical)
-
-    if should_run_cardiac_rehab(codes):
-        payload.measurement.cardiac_rehab = run_cardiac_rehab(calc_mod, clinical)
-
-    if should_run_healthy_day(codes):
-        payload.measurement.healthy_day_at_home = run_healthy_day_at_home(calc_mod, clinical)
-
-    assemble_messages(payload, preloaded)
-    return payload
-
-
-# -----------------------------
-# 9) CLI: persona + choose preloaded question OR custom
-# -----------------------------
-
-def prompt_persona() -> Persona:
-    print("\nChoose persona:")
-    print("  1) Listener")
-    print("  2) Motivator")
-    print("  3) Director")
-    print("  4) Expert")
-    while True:
-        raw = input("Enter 1-4 (or L/M/D/E): ").strip().upper()
-        if raw in PERSONA_CHOICES:
-            return PERSONA_CHOICES[raw]
-        print("⚠️ Please enter 1,2,3,4 or L,M,D,E.")
-
-
-def prompt_choose_preloaded_question() -> Optional[PreloadedQuestion]:
-    print("\nUse a preloaded question?")
-    raw = input("Enter Y to choose from the question bank, or press Enter for custom: ").strip().lower()
-    if raw != "y":
+# ---------------------------------------
+# Scoring hooks (MyLifeCheck + PREVENT)
+# ---------------------------------------
+def compute_mylifecheck(values: Dict[str, Any]) -> Optional[Any]:
+    """
+    Attempts to compute Life’s Essential 8 / MyLifeCheck using combined_calculator if available.
+    Returns object or None.
+    """
+    if CALC is None:
         return None
 
-    cat = input("Optional: type a category to filter (or press Enter to show all): ").strip()
-    items = list_questions(category=cat if cat else None)
-
-    if not items:
-        print("⚠️ No questions found for that filter. Showing all.")
-        items = list_questions()
-
-    print("\nPreloaded Questions:")
-    for q in items:
-        print(f"  {q.qid}: {q.question}  [{q.category}]")
-
-    while True:
-        qid = input("\nEnter question ID (e.g., CKM-01): ").strip()
-        q = get_question(qid)
-        if q:
-            return q
-        print("⚠️ Not found. Please enter a valid ID shown above.")
-
-
-def prompt_signatures_input() -> Tuple[SignaturesInput, Optional[PreloadedQuestion]]:
-    print("\n=== Signatures Input (persona + question bank) ===")
-    persona = prompt_persona()
-    preloaded = prompt_choose_preloaded_question()
-
-    if preloaded:
-        question = preloaded.question
-        behavioral_core = preloaded.behavioral_core
-        condition_mods = {c: 1 for c in preloaded.default_conditions}
-        drivers = dict(preloaded.default_drivers)
-
-        print(f"\nLoaded {preloaded.qid}: {question}")
-        print(f"Auto behavioral core: {behavioral_core}")
-        if condition_mods:
-            print(f"Auto conditions: {', '.join(condition_mods.keys())}")
-        if drivers:
-            print(f"Auto drivers: {drivers}")
-    else:
-        question = input("Enter the question: ").strip()
-        behavioral_core = input("Behavioral core code (e.g., PA, BP, NUT, MA, PC, HL): ").strip().upper()
-
-        print("\nCondition modifiers (enter codes like CKM, HT, CD, HF, AF, DM; blank to stop).")
-        condition_mods: Dict[str, int] = {}
-        while True:
-            c = input("Condition code (blank to stop): ").strip().upper()
-            if not c:
-                break
-            condition_mods[c] = 1
-
-        drivers: Dict[str, int] = {}
-
-    # Always allow adding extra modifiers even if preloaded
-    print("\nAdd additional condition modifiers (optional). Press Enter to skip.")
-    while True:
-        c = input("Extra condition code (blank to stop): ").strip().upper()
-        if not c:
-            break
-        condition_mods[c] = 1
-
-    print("\nEngagement drivers (optional). Enter code + value: -1 not present, 0 unknown, 1 present; blank driver to stop.")
-    while True:
-        d = input("Driver code (blank to stop): ").strip().upper()
-        if not d:
-            break
-        while True:
-            raw = input("Value (-1, 0, 1): ").strip()
-            if raw == "":
-                print("⚠️ Please enter -1, 0, or 1.")
-                continue
+    for fn_name in ("mylifecheck_score", "my_life_check", "calculate_mylifecheck", "calc_mylifecheck"):
+        fn = getattr(CALC, fn_name, None)
+        if callable(fn):
             try:
-                v = int(raw)
-            except ValueError:
-                print("⚠️ Invalid. Enter -1, 0, or 1.")
-                continue
-            if v not in (-1, 0, 1):
-                print("⚠️ Must be -1, 0, or 1.")
-                continue
-            drivers[d] = v
-            break
+                return fn(values)  # many implementations accept dict
+            except TypeError:
+                try:
+                    return fn()  # some prompt internally
+                except Exception:
+                    return None
+            except Exception:
+                return None
+    return None
+
+
+def compute_prevent(values: Dict[str, Any]) -> Optional[Any]:
+    """
+    Attempts to compute PREVENT using combined_calculator if available.
+    """
+    if CALC is None:
+        return None
+
+    for fn_name in ("prevent_risk", "calculate_prevent", "calc_prevent", "prevent_score"):
+        fn = getattr(CALC, fn_name, None)
+        if callable(fn):
+            try:
+                return fn(values)
+            except TypeError:
+                try:
+                    return fn()
+                except Exception:
+                    return None
+            except Exception:
+                return None
+    return None
+
+
+# ---------------------------------------
+# Rendering the Signatures output
+# ---------------------------------------
+def render_sources(sources: List[Dict[str, str]]) -> None:
+    if not sources:
+        return
+    print("\nSource(s):")
+    for s in sources:
+        org = s.get("org", "").strip()
+        title = s.get("title", "").strip()
+        url = s.get("url", "").strip()
+        if org and title and url:
+            print(f"- {org}: {title} — {url}")
+        elif title and url:
+            print(f"- {title} — {url}")
+        elif url:
+            print(f"- {url}")
+
+
+def run_signatures(sig: SignaturesInput, preloaded: Optional[Dict[str, Any]] = None) -> None:
+    print("\n" + "=" * 72)
+    print("SIGNATURES OUTPUT")
+    print("=" * 72)
+
+    # 1) Behavioral Core
+    bc = sig.behavioral_core.upper()
+    bc_info = BEHAVIORAL_CORE_MESSAGES.get(bc, {"title": bc, "generic": "Start with a safe, practical first step and build consistency."})
+    print(f"\nBehavioral Core [{bc}]: {bc_info.get('title')}")
+    print(f"- {bc_info.get('generic')}")
+
+    # 2) Condition Modifiers
+    if sig.condition_modifiers:
+        print("\nCondition Modifiers:")
+        for cm in sig.condition_modifiers:
+            msg = CONDITION_MODIFIER_MESSAGES.get(cm, "")
+            if msg:
+                print(f"- [{cm}] {msg}")
+            else:
+                print(f"- [{cm}] (no custom message yet)")
+
+    # 3) Engagement drivers (>0)
+    active_drivers = {k: v for k, v in sig.engagement_drivers.items() if v > 0}
+    if active_drivers:
+        print("\nEngagement Drivers (>0):")
+        for k in active_drivers.keys():
+            msg = ENGAGEMENT_DRIVER_MESSAGES.get(k, "")
+            if msg:
+                print(f"- [{k}] {msg}")
+            else:
+                print(f"- [{k}] (no custom message yet)")
+
+    # 4) Persona answer (from question bank if preloaded; otherwise generic)
+    print(f"\nPersona: {sig.persona}")
+    if preloaded and preloaded.get("answers", {}).get(sig.persona):
+        ans = preloaded["answers"][sig.persona]
+        print("\nMessage:")
+        print(f"- {ans.get('text','')}")
+        print("\nAction Step:")
+        print(f"- {ans.get('action_step','')}")
+        print("\nWhy It Matters:")
+        print(f"- {ans.get('why_it_matters','')}")
+    else:
+        print("\nMessage:")
+        print(f"- Start with one small step this week, track it, and adjust based on how you feel and your data.")
+        print("\nAction Step:")
+        print(f"- Pick one action you can do 3–5 days this week.")
+        print("\nWhy It Matters:")
+        print(f"- Small—done consistently—creates measurable progress.")
+
+    # 5) Security rule
+    print("\nSecurity Rule:")
+    print(f"- {SECURITY_RULES['EXERCISE_CHEST_PAIN_STOP']}")
+
+    # 6) Action plan
+    print("\nAction Plan:")
+    print(f"- {ACTION_PLANS['CARDIAC_REHAB']}")
+
+    # 7) Scoring hooks (MyLifeCheck + PREVENT)
+    print("\nScoring Hooks:")
+    mylc = compute_mylifecheck(sig.values)
+    prev = compute_prevent(sig.values)
+
+    if mylc is None:
+        print("- MyLifeCheck (Life’s Essential 8): (hook ready) — no calculator output available.")
+    else:
+        print(f"- MyLifeCheck (Life’s Essential 8): {mylc}")
+
+    if prev is None:
+        print("- PREVENT: (hook ready) — no calculator output available.")
+    else:
+        print(f"- PREVENT: {prev}")
+
+    # 8) Sources (prefer AHA; from the question bank if present)
+    if preloaded:
+        render_sources(preloaded.get("sources", []))
+    else:
+        render_sources([CONTENT_LINKS["AHA_MYLIFECHECK"]])
+
+    print("\n" + "=" * 72 + "\n")
+
+
+# ---------------------------------------
+# Main CLI flow
+# ---------------------------------------
+def main() -> None:
+    # Validate bank once at startup (non-fatal)
+    issues = validate_question_bank(raise_on_error=False)
+    if issues:
+        print("⚠️ Question bank issues detected (non-fatal). First 5:")
+        for x in issues[:5]:
+            print("-", x)
+
+    print("Signatures Engine\n")
+
+    persona = prompt_persona()
+
+    use_preloaded = input("Use a preloaded question? (Y/n): ").strip().lower()
+    if use_preloaded in ("", "y", "yes"):
+        q = pick_preloaded_question()
+        if q is None:
+            print("No preloaded question selected. Switching to custom question.")
+            q = None
+    else:
+        q = None
+
+    if q:
+        question_text = q["question"]
+        behavioral_core = q.get("behavioral_core", "PC")
+        default_conditions = q.get("default_conditions", [])
+        default_drivers = q.get("default_drivers", {})
+    else:
+        question_text = input("\nEnter your question: ").strip()
+        behavioral_core = input("Behavioral core code (e.g., PC, PA, NUT) [default PC]: ").strip().upper() or "PC"
+        default_conditions = []
+        default_drivers = {}
+
+    # Condition modifiers + drivers
+    condition_modifiers = prompt_condition_modifiers(defaults=default_conditions)
+    drivers = prompt_engagement_drivers()
+    # merge defaults if provided (defaults do not override user input)
+    for k, v in default_drivers.items():
+        drivers.setdefault(k, v)
+
+    # Clinical values (optional)
+    print("\nClinical values: pulling from combined_calculator.py if available (otherwise skipped).")
+    values = get_values_from_calculator_if_possible()
 
     sig = SignaturesInput(
-        question=question,
         persona=persona,
+        question_text=question_text,
         behavioral_core=behavioral_core,
-        condition_modifiers=condition_mods,
+        condition_modifiers=condition_modifiers,
         engagement_drivers=drivers,
+        values=values,
     )
-    return sig, preloaded
 
-
-# -----------------------------
-# 10) Main
-# -----------------------------
-
-def main() -> int:
-    try:
-        calc_mod = import_module_from_path(CALCULATOR_PATH, CALCULATOR_MODULE_NAME)
-    except Exception as e:
-        print(f"ERROR importing calculator module: {e}")
-        print(f"Looked for: {CALCULATOR_PATH.resolve()}")
-        return 1
-
-    # Light sanity check to help debugging
-    if not QUESTION_BANK:
-        print("⚠️ WARNING: QUESTION_BANK is empty. Check questions.py import and question registration.")
-
-    sig, preloaded = prompt_signatures_input()
-    payload = build_payload(sig, calc_mod, preloaded)
-
-    if payload.persona_output:
-        print("\n=== Persona Output (from preloaded content if selected) ===")
-        print("\n".join(payload.persona_output))
-
-    print("\n=== Full Signatures Payload (JSON) ===")
-    print(json.dumps(asdict(payload), indent=2, default=str))
-
-    clinical = extract_clinical_inputs(calc_mod)
-    if not clinical:
-        print("\n⚠️ NOTE: No clinical inputs found in combined_calculator.py.")
-        print("To reuse values automatically, expose one of these in combined_calculator.py:")
-        print("- INPUTS = {...}   (dict)")
-        print("- inputs = {...}   (dict)")
-        print("- def get_inputs(): return {...}")
-        print("- def get_latest_inputs(): return {...}")
-
-    return 0
+    run_signatures(sig, preloaded=q)
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nExiting.")
+        sys.exit(0)
+
 
 
