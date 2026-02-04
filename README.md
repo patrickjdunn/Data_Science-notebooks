@@ -1,4 +1,4 @@
-# hi5304-notebooks
+# Data Science Coding Laboratory
 Data science module on GitHub
 
 Running signatures_engine.py (Signatures Engine)
