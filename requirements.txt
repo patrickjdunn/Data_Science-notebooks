@@ -6,3 +6,7 @@ jupyter
 ipykernel
 sqlalchemy
 psycopg2-binary
+scipy
+seaborn
+statsmodels
+
