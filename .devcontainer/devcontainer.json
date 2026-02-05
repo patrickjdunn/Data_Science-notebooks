@@ -1,20 +1,15 @@
 {
   "name": "Data Science Coding Laboratory",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/Data_Science_Coding_Laboratory",
   "runServices": ["db"],
-  "shutdownAction": "stopCompose",
-
-  "features": {
-    "ghcr.io/devcontainers/features/postgres-client:1": {},
-    "ghcr.io/devcontainers/features/r:1": {
-      "version": "4.3"
-    }
-  },
-
-  "postCreateCommand": "python -m pip install --upgrade pip && pip install -U pandas sqlalchemy psycopg2-binary jupyterlab && R -e \"install.packages(c('tidyverse','janitor','skimr','IRkernel'), repos='https://cloud.r-project.org')\" && R -e \"IRkernel::installspec(user = FALSE)\""
+  "shutdownAction": "stopCompose"
 }
+
 
 
 
