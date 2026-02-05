@@ -1,0 +1,9 @@
+{
+    "name": "Charlie",
+    "age": 63,
+    "heart_rate": 82,
+    "medications": [
+        "Lisinopril",
+        "Metformin"
+    ]
+}
