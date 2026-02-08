@@ -1,8 +1,44 @@
+![Python](https://img.shields.io/badge/Python-3.x-blue?logo=python)
+![R](https://img.shields.io/badge/R-4.x-blue?logo=r)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-psql-blue?logo=postgresql)
+![GitHub Codespaces](https://img.shields.io/badge/GitHub-Codespaces-black?logo=github)
+
+
 # Data Science Coding Laboratory
 
-**Python • R • SQL (PostgreSQL) in GitHub Codespaces**
+**Python • R • SQL • GitHub • JavaScript • Command Line**
 
-This repository is designed to run in **GitHub Codespaces** with a fully preconfigured environment for **Python**, **R**, and **PostgreSQL (psql)**. No local installation is required.
+This repository supports hands-on learning in **data science and health informatics** using  
+**GitHub Codespaces** with a preconfigured environment for:
+
+- Python
+- R
+- PostgreSQL (psql)
+- Jupyter Notebooks
+- Git & GitHub
+- JavaScript (introductory)
+- Command-line workflows
+
+No local installation is required.
+
+---
+
+## Table of Contents
+
+1. [Getting Started in GitHub Codespaces](#getting-started-in-github-codespaces)
+2. [Jupyter Notebooks and Kernels](#jupyter-notebooks-and-kernels)
+3. [PostgreSQL (psql)](#postgresql-psql)
+4. [Learning Modules](#learning-modules)
+   - [Python](#python-modules)
+   - [R](#r-modules)
+   - [SQL](#sql-modules)
+   - [Git and GitHub](#git-and-github-modules)
+   - [Command Line](#command-line-modules)
+   - [JavaScript](#javascript-modules)
+5. [Learning Utilities](#learning-utilities)
+   - [`signatures_engine.py`](#signatures_enginepy)
+6. [Environment Sanity Check](#environment-sanity-check)
+7. [Important Notes](#important-notes)
 
 ---
 
@@ -13,7 +49,7 @@ This repository is designed to run in **GitHub Codespaces** with a fully preconf
 3. Once loaded, you are ready to work in:
 
    * Jupyter notebooks (Python or R)
-   * The terminal (Python, R, or SQL via `psql`)
+   * The terminal (Python, R, or SQL via `psql`, plus Git, Node/JavaScript)
 
 ---
 
@@ -27,7 +63,7 @@ This environment supports **both Python and R kernels**.
 2. In the top menu, select **Kernel → Change Kernel**
 3. Choose one of:
 
-   * **Python 3** → for Python-based analysis
+   * **Python 3.12 → for Python-based analysis
    * **R** → for R-based analysis
 
 You can freely switch kernels depending on the notebook or lesson.
@@ -107,12 +143,167 @@ jupyter kernelspec list
 
 Expected output includes:
 
-* Python 3.x
+* Python 3.12
 * PostgreSQL client (`psql`)
 * R
 * Jupyter kernels: `python3` and `ir`
 
 ---
+
+Learning Modules
+
+All instructional content lives in clearly organized folders.
+
+Python Modules
+
+📁 python/
+
+Topics include:
+
+Python fundamentals
+
+Data structures
+
+Pandas and NumPy
+
+Introductory data analysis
+
+Applied health datasets
+
+R Modules
+
+📁 r/
+
+Topics include:
+
+R and RStudio-style workflows
+
+Tidyverse (dplyr, ggplot2, readr)
+
+Descriptive statistics
+
+Data visualization
+
+Reproducible analysis
+
+SQL Modules
+
+📁 sql/
+
+Topics include:
+
+Relational data concepts
+
+SELECT, WHERE, JOIN, GROUP BY
+
+Loading CSVs into PostgreSQL
+
+Health and clinical datasets
+
+Querying from Python and R
+
+Git and GitHub Modules
+
+📁 git-github/
+
+Topics include:
+
+Git fundamentals
+
+Repositories and branches
+
+Commits and pull requests
+
+GitHub Classroom workflows
+
+Using GitHub Codespaces
+
+Command Line Modules
+
+📁 command-line/
+
+Topics include:
+
+Navigating directories (cd, ls, pwd)
+
+File operations
+
+Running scripts
+
+Environment inspection
+
+Connecting tools (Python, R, SQL)
+
+JavaScript Modules
+
+📁 javascript/
+
+Topics include:
+
+JavaScript fundamentals
+
+Running JavaScript in Codespaces
+
+Intro to Node.js concepts
+
+JavaScript for data and web literacy
+
+Preparing for frontend integration
+
+Learning Utilities
+signatures_engine.py
+
+📁 learning/signatures_engine.py
+
+This utility demonstrates how code structure, function signatures, and execution flow work together. It is used as a teaching tool for:
+
+Understanding Python scripts vs notebooks
+
+Function definitions
+
+Execution order
+
+Command-line execution
+
+How to run signatures_engine.py
+
+From the terminal:
+
+cd learning
+python signatures_engine.py
+
+
+Students should read the source code before and after running it to connect program structure with output.
+
+Environment Sanity Check
+
+If something does not behave as expected, run:
+
+python --version
+R --version
+psql --version
+jupyter kernelspec list
+
+
+Expected:
+
+Python 3.x
+
+R
+
+PostgreSQL client (psql)
+
+Jupyter kernels: python3, ir
+
+Important Notes
+
+You do not need to install anything locally
+
+Repository name, workspace folder, and database name do not need to match
+
+All work should be committed back to GitHub regularly
+
+Restart the kernel or reload Codespaces if something seems off
 
 ## Important Notes
 
