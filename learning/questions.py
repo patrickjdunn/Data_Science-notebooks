@@ -1169,6 +1169,1004 @@ PACKS: Dict[str, Dict[str, Any]] = {
     },
 
     #next pack
+    # ---------------------------------------------------------------------
+# DROP-IN PACKS (CKMH, HTN, AF, HF)
+# Schema matches SLEEP/REHAB/CAD packs:
+# - responses keys are lowercase: listener/motivator/director/expert
+# - engagement_drivers uses -1/0/+1 values
+# - includes signature_tags, security_rules, action_plans for each question
+# ---------------------------------------------------------------------
+
+# -------------------------
+# CKMH PACK (10) - Heart, Kidney, Metabolic Health (CKM/CKMH)
+# -------------------------
+     
+
+    "CKMH": {
+    "category": "CKMH",
+    "title": "Heart, Kidney, and Metabolic Health (CKM)",
+    "source_defaults": [
+        _aha_source("CKM Syndrome (Overview)", "https://www.heart.org/en/health-topics/cardiometabolic-health/cardiovascular-kidney-metabolic-syndrome"),
+        _aha_source("Life’s Essential 8", "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8"),
+        _aha_source("High Blood Pressure", "https://www.heart.org/en/health-topics/high-blood-pressure"),
+        _aha_source("Diabetes & Heart Health", "https://www.heart.org/en/health-topics/diabetes"),
+        _aha_source("Kidney Disease & Heart Health", "https://www.heart.org/en/health-topics/consumer-healthcare/kidney-disease-and-heart-health"),
+    ],
+    "questions": [
+        {
+            "question": "What does my diagnosis mean for my future?",
+            "keywords": ["diagnosis", "prognosis", "future", "ckm"],
+            "signatures": {
+                "behavioral_core": ["HL", "GO"],
+                "condition_modifiers": ["CKM"],
+                "engagement_drivers": {"HL": 1, "SE": 0, "GO": 1, "TR": 0},
+                "signature_tags": ["CKMH", "CKM", "LifeEssential8", "PREVENT", "SharedDecisionMaking"],
+            },
+            "responses": {
+                "listener": "That sounds overwhelming. What are you most worried about?",
+                "motivator": "You can live a full life with support—one step at a time.",
+                "director": "Let’s monitor your labs and key scores regularly (often every ~3 months early on). Schedule your next lab visit and follow-up now.",
+                "expert": "Early action guided by risk scoring and Life’s Essential 8 can change your trajectory by targeting the highest-impact risks.",
+            },
+            "security_rules": [
+                "If you have chest pain, trouble breathing, fainting, stroke symptoms, or very high blood pressure with symptoms, seek urgent/emergency care.",
+            ],
+            "action_plans": [
+                "Write down your top 3 concerns and bring them to your next visit (it helps your care team focus on what matters most).",
+                "Ask for your PREVENT (or similar) risk estimate and a simple plan for what to improve next (personalized targets guide care decisions).",
+            ],
+        },
+        {
+            "question": "What can I eat—and what should I avoid?",
+            "keywords": ["diet", "nutrition", "dash", "mediterranean", "sodium"],
+            "signatures": {
+                "behavioral_core": ["NUT"],
+                "condition_modifiers": ["CKM", "HTN", "DM", "CKD"],
+                "engagement_drivers": {"HL": 1, "SE": 0, "GO": 0, "FI": 0},
+                "signature_tags": ["CKMH", "Nutrition", "DASH", "Mediterranean", "LifeEssential8"],
+            },
+            "responses": {
+                "listener": "What foods do you enjoy? Let’s start there.",
+                "motivator": "Healthy food can taste great—and small swaps add up fast.",
+                "director": "Use a DASH or Mediterranean-style pattern: more fruits/veg, beans, whole grains; lean proteins; lower sodium and added sugars. Start with one swap today.",
+                "expert": "These patterns are strongly linked to lower cardiovascular risk and better blood pressure and metabolic control over time.",
+            },
+            "security_rules": [
+                "If you have kidney disease or heart failure, follow clinician guidance on sodium, potassium, and fluids—needs can differ by stage and meds.",
+            ],
+            "action_plans": [
+                "Track meals for 3 days (it reveals strengths and the easiest next change).",
+                "Replace one salty snack with fruit/vegetables or unsalted nuts this week (small swaps can lower blood pressure and improve metabolic health).",
+            ],
+        },
+        {
+            "question": "Why am I on so many medications?",
+            "keywords": ["medications", "polypharmacy", "side effects", "adherence"],
+            "signatures": {
+                "behavioral_core": ["HL", "SE"],
+                "condition_modifiers": ["CKM", "HTN", "DM", "CKD", "CAD"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "TR": 0, "GO": 0},
+                "signature_tags": ["CKMH", "Medications", "Adherence", "Safety"],
+            },
+            "responses": {
+                "listener": "Do any of them cause side effects or feel confusing?",
+                "motivator": "Each medication is usually doing a specific job—protecting your heart, kidneys, and metabolism together.",
+                "director": "Bring all meds (or a photo/list) to your next visit. Ask what each one is for and when to take it. Use a pillbox or reminders.",
+                "expert": "When used correctly, guideline-based medications reduce complications and ER visits; your clinician can simplify or adjust when needed.",
+            },
+            "security_rules": [
+                "Do not stop or change prescription medicines without clinician guidance—especially blood pressure meds, blood thinners, insulin, or diuretics.",
+            ],
+            "action_plans": [
+                "Bring all meds/supplements to your next appointment (helps avoid duplication and interactions).",
+                "Report missed doses and side effects early (your clinician can adjust safely).",
+            ],
+        },
+        {
+            "question": "How do I know if my condition is getting better or worse?",
+            "keywords": ["monitoring", "labs", "symptoms", "progress"],
+            "signatures": {
+                "behavioral_core": ["SY", "HL"],
+                "condition_modifiers": ["CKM"],
+                "engagement_drivers": {"HL": 1, "GO": 1, "SE": 0, "TR": 0},
+                "signature_tags": ["CKMH", "Tracking", "Labs", "LifeEssential8"],
+            },
+            "responses": {
+                "listener": "Have you noticed any changes in how you feel day to day?",
+                "motivator": "Monitoring gives you control—data helps you act early.",
+                "director": "Use a simple weekly log (BP, weight, symptoms, activity). Ask your provider to explain lab trends and what’s “good progress” for you.",
+                "expert": "Scores and trends (blood pressure, glucose/A1c, cholesterol, kidney labs) help track real progress across systems.",
+            },
+            "security_rules": [
+                "Seek urgent care for chest pain, severe shortness of breath, fainting, new confusion/weakness, or rapid swelling/weight gain with breathing trouble.",
+            ],
+            "action_plans": [
+                "Keep a weekly symptom + vitals log (it spots change early).",
+                "At visits, ask: “Is my risk improving? What’s the next target?” (trend-based decisions are more effective than one-off values).",
+            ],
+        },
+        {
+            "question": "Will I need dialysis or heart surgery?",
+            "keywords": ["dialysis", "surgery", "fear", "risk"],
+            "signatures": {
+                "behavioral_core": ["PR", "HL"],
+                "condition_modifiers": ["CKD", "CAD", "HF", "CKM"],
+                "engagement_drivers": {"PR": 1, "HL": 1, "SE": 0, "TR": 0},
+                "signature_tags": ["CKMH", "RiskReduction", "Planning", "SpecialistCare"],
+            },
+            "responses": {
+                "listener": "That’s a scary thought. What worries you most about it?",
+                "motivator": "You can take meaningful steps that lower risk—your actions matter.",
+                "director": "Stay current on labs and imaging, and keep BP and glucose targets. Ask if you should see cardiology/nephrology for a tailored plan.",
+                "expert": "Controlling blood pressure and glucose and following guideline therapy can substantially reduce progression and complications over time.",
+            },
+            "security_rules": [
+                "If you have chest pain, worsening shortness of breath, confusion, or severe swelling, seek urgent evaluation.",
+            ],
+            "action_plans": [
+                "Write down questions for your clinician (reduces fear and supports planning).",
+                "Ask whether a specialist visit is appropriate and what your key “watch” markers are (early detection enables early action).",
+            ],
+        },
+        {
+            "question": "Can I still exercise?",
+            "keywords": ["exercise", "activity", "safety", "ckm"],
+            "signatures": {
+                "behavioral_core": ["PA"],
+                "condition_modifiers": ["CKM", "CAD", "HTN", "DM", "CKD"],
+                "engagement_drivers": {"SE": 1, "GO": 1, "HL": 0, "PR": 1},
+                "signature_tags": ["CKMH", "PhysicalActivity", "CardiacRehab", "LifeEssential8"],
+            },
+            "responses": {
+                "listener": "What kind of movement do you enjoy—or feel willing to try?",
+                "motivator": "Movement is medicine. Even 10 minutes counts.",
+                "director": "Aim toward ~150 minutes/week moderate activity, but start small. Try a 10-minute walk after a meal and build from there. Ask about cardiac rehab if needed.",
+                "expert": "Regular activity improves blood pressure, insulin sensitivity, lipids, and fitness—key drivers across CKM health.",
+            },
+            "security_rules": [
+                "Stop and seek urgent care for chest pain/pressure, severe shortness of breath, fainting, or new neurologic symptoms during activity.",
+            ],
+            "action_plans": [
+                "Do a 10-minute walk after one meal daily for 7 days (light activity improves glucose and BP).",
+                "If you’ve had a recent event/procedure, ask about supervised rehab (structured programs improve safety and confidence).",
+            ],
+        },
+        {
+            "question": "What’s a healthy blood pressure for me?",
+            "keywords": ["blood pressure", "targets", "monitoring"],
+            "signatures": {
+                "behavioral_core": ["SY", "HL"],
+                "condition_modifiers": ["HTN", "CKM"],
+                "engagement_drivers": {"HL": 1, "GO": 1, "SE": 0, "PR": 0},
+                "signature_tags": ["CKMH", "BloodPressure", "Targets", "HomeMonitoring"],
+            },
+            "responses": {
+                "listener": "Do you remember your last reading—and how it was taken (home vs clinic)?",
+                "motivator": "Lower BP supports your brain, heart, and kidneys. You’re building protection with each step.",
+                "director": "Targets are individualized, but many people aim <130/80. Take readings consistently and bring your cuff/log to visits for accuracy checks.",
+                "expert": "Good control lowers risk of stroke and kidney disease progression; technique and consistent measurement matter.",
+            },
+            "security_rules": [
+                "If BP is ≥180/120 especially with symptoms (chest pain, severe headache, shortness of breath, neurologic symptoms), seek urgent/emergency care.",
+            ],
+            "action_plans": [
+                "Take BP at the same time on 3 days this week and record results (consistent technique reduces noise).",
+                "Bring your BP cuff to your next visit to verify accuracy (bad devices mislead decisions).",
+            ],
+        },
+        {
+            "question": "How can I manage this and still live my life?",
+            "keywords": ["routine", "balance", "quality of life", "stress"],
+            "signatures": {
+                "behavioral_core": ["HB", "ST"],
+                "condition_modifiers": ["CKM"],
+                "engagement_drivers": {"SE": 1, "GO": 1, "PR": 1, "HL": 0},
+                "signature_tags": ["CKMH", "Routines", "BehaviorChange", "Support"],
+            },
+            "responses": {
+                "listener": "What’s been hardest lately—time, stress, food, meds, or motivation?",
+                "motivator": "You’re not alone—and you’re stronger than you think. One habit at a time works.",
+                "director": "Pick a weekly planning day. Build your plan into your real routine (med timing, grocery habits, walks). Use reminders and small defaults.",
+                "expert": "Digital tools and structured routines improve adherence and reduce decision fatigue across chronic conditions.",
+            },
+            "security_rules": [
+                "If stress or mood symptoms feel severe or unsafe, seek urgent help or talk to a healthcare professional promptly.",
+            ],
+            "action_plans": [
+                "Write your top 3 barriers and one workaround for each (barrier awareness improves follow-through).",
+                "Choose a “health buddy” or accountability check-in this week (support increases consistency).",
+            ],
+        },
+        {
+            "question": "Are my heart, kidneys, and diabetes connected?",
+            "keywords": ["ckm", "connected", "kidney", "diabetes", "heart"],
+            "signatures": {
+                "behavioral_core": ["HL"],
+                "condition_modifiers": ["CKM", "DM", "CKD", "CAD", "HF"],
+                "engagement_drivers": {"HL": 1, "TR": 0, "SE": 0, "GO": 0},
+                "signature_tags": ["CKMH", "CKM", "SystemsThinking", "Education"],
+            },
+            "responses": {
+                "listener": "Have you heard of CKM syndrome before, or is it new?",
+                "motivator": "The good news: one healthy habit can help all three systems at once.",
+                "director": "Ask for coordinated care (primary + cardiology + nephrology/endocrine as needed). Use one daily habit (like a short walk after dinner) to support multiple systems.",
+                "expert": "The AHA treats CKM as a connected health issue; shared drivers include BP, glucose, weight, and inflammation—addressing them improves outcomes broadly.",
+            },
+            "security_rules": [
+                "If you have sudden worsening symptoms (breathing trouble, chest pain, confusion, severe swelling), seek urgent evaluation.",
+            ],
+            "action_plans": [
+                "Ask your provider to explain how your conditions connect and what your top 2 targets are (understanding helps earlier action).",
+                "Walk 10–15 minutes after dinner for 7 days (one action can improve BP and glucose).",
+            ],
+        },
+        {
+            "question": "How do I avoid going back to the hospital?",
+            "keywords": ["readmission", "prevention", "early warning signs", "remote monitoring"],
+            "signatures": {
+                "behavioral_core": ["PC", "SY"],
+                "condition_modifiers": ["CKM", "HF", "CAD", "CKD"],
+                "engagement_drivers": {"PR": 1, "SE": 1, "HL": 1, "TR": 0},
+                "signature_tags": ["CKMH", "Readmissions", "EarlyAction", "RemoteMonitoring"],
+            },
+            "responses": {
+                "listener": "What happened the last time you were hospitalized—what were the early signs?",
+                "motivator": "Every healthy choice counts. You’re building stability one day at a time.",
+                "director": "Create an early-warning plan: symptoms to watch, who to call, and what to do first. Ask about telehealth or remote monitoring if available.",
+                "expert": "Early recognition and rapid adjustment of care reduces crises; connected monitoring and coaching can reduce readmissions in many programs.",
+            },
+            "security_rules": [
+                "Chest pain, severe shortness of breath, fainting, stroke symptoms, or rapidly worsening swelling/weight gain with breathing difficulty requires urgent evaluation.",
+            ],
+            "action_plans": [
+                "Keep a simple journal of early symptoms and triggers (patterns help prevent emergencies).",
+                "Ask your care team about remote monitoring/telehealth options and escalation thresholds (early care reduces ER visits).",
+            ],
+        },
+    ],
+},
+
+
+
+# -------------------------
+# HTN PACK (10) - High Blood Pressure
+# -------------------------
+"HTN": {
+"category": "HTN",
+"title": "High Blood Pressure (Hypertension)",
+    "source_defaults": [
+        _aha_source("High Blood Pressure", "https://www.heart.org/en/health-topics/high-blood-pressure"),
+        _aha_source("Understanding Blood Pressure Readings", "https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings"),
+        _aha_source("DASH Eating Plan", "https://www.heart.org/en/healthy-living/healthy-eating/eat-smart/nutrition-basics/dash-diet"),
+        _aha_source("How to Measure Blood Pressure at Home", "https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings/monitoring-your-blood-pressure-at-home"),
+        _aha_source("Life’s Essential 8", "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8"),
+    ],
+    "questions": [
+        {
+            "question": "What should my blood pressure goal be?",
+            "keywords": ["goal", "target", "130/80", "bp"],
+            "signatures": {
+                "behavioral_core": ["HL", "SY"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"HL": 1, "GO": 1, "SE": 0, "TR": 0},
+                "signature_tags": ["HTN", "Targets", "HomeMonitoring", "LifeEssential8"],
+            },
+            "responses": {
+                "listener": "It’s normal to feel unsure—many people don’t know their number.",
+                "motivator": "Knowing your goal puts you in control!",
+                "director": "For many people, a common target is below 130/80, but confirm your personal goal with your clinician. Track BP and compare to your target weekly.",
+                "expert": "Lower blood pressure is linked to lower risk of heart attack, stroke, and kidney disease; targets are safer when individualized.",
+            },
+            "security_rules": [
+                "If BP is ≥180/120 with symptoms (chest pain, severe headache, shortness of breath, weakness, confusion), seek urgent/emergency care.",
+            ],
+            "action_plans": [
+                "Ask your doctor: “What’s my target BP?” (clear targets guide decisions).",
+                "Write your goal somewhere visible (visibility improves follow-through).",
+            ],
+        },
+        {
+            "question": "Do I really need medication?",
+            "keywords": ["medication", "antihypertensive", "lifestyle vs meds"],
+            "signatures": {
+                "behavioral_core": ["HL", "SE"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "TR": 0, "PR": 0},
+                "signature_tags": ["HTN", "Medications", "Adherence", "SharedDecisionMaking"],
+            },
+            "responses": {
+                "listener": "It’s okay to feel unsure. Many people ask this.",
+                "motivator": "Medication is one tool to protect your heart—just like food and movement.",
+                "director": "Ask how meds fit your overall plan. If starting meds, link them to a daily habit (like brushing teeth) and recheck BP with your clinician’s timeline.",
+                "expert": "For many people, the best results come from combining medication with healthy habits—especially when BP is persistently elevated or risk is higher.",
+            },
+            "security_rules": [
+                "Do not stop blood pressure medicines abruptly without clinician guidance.",
+            ],
+            "action_plans": [
+                "Ask: “What problem is this medication solving?” (clarity improves adherence).",
+                "Pair your dose with a daily routine cue (habit pairing increases consistency).",
+            ],
+        },
+        {
+            "question": "What can I do besides taking medication?",
+            "keywords": ["lifestyle", "salt", "exercise", "sleep", "stress"],
+            "signatures": {
+                "behavioral_core": ["NUT", "PA", "SLEEP", "ST"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"GO": 1, "SE": 1, "HL": 1, "PR": 0},
+                "signature_tags": ["HTN", "Lifestyle", "DASH", "LifeEssential8"],
+            },
+            "responses": {
+                "listener": "It’s great that you want to take action!",
+                "motivator": "Your body responds quickly to healthy habits—small steps work.",
+                "director": "Choose one focus area this week: food, movement, sleep, or stress. Try tracking sodium for 3 days and add a daily 10-minute walk.",
+                "expert": "Lifestyle changes can lower systolic BP meaningfully; stacking a few changes often beats any single change alone.",
+            },
+            "security_rules": [
+                "If you’re starting an exercise plan and have chest pain, fainting, or severe shortness of breath history, get medical clearance first.",
+            ],
+            "action_plans": [
+                "Pick one area (food/movement/sleep/stress) and do one change for 7 days (small starts are sustainable).",
+                "Track sodium intake for 3 days (awareness drives improvement).",
+            ],
+        },
+        {
+            "question": "What kind of diet should I follow?",
+            "keywords": ["dash", "diet", "sodium", "nutrition"],
+            "signatures": {
+                "behavioral_core": ["NUT"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"HL": 1, "SE": 0, "GO": 0, "FI": 0},
+                "signature_tags": ["HTN", "Nutrition", "DASH", "Mediterranean"],
+            },
+            "responses": {
+                "listener": "Choosing what to eat can feel confusing. You’re not alone.",
+                "motivator": "Small food swaps can lead to big results.",
+                "director": "Try a DASH-style pattern: fruits/veg, whole grains, low-fat dairy, beans, nuts; limit sodium and ultra-processed foods. Add one fruit/veg to each meal.",
+                "expert": "Clinical trials show DASH lowers BP and improves heart health; consistency matters more than perfection.",
+            },
+            "security_rules": [
+                "If you have kidney disease, discuss potassium/salt substitutes with your clinician—some can be unsafe with certain meds.",
+            ],
+            "action_plans": [
+                "Keep a simple food journal for 3 days (reflection builds insight).",
+                "Add one fruit or vegetable to each meal for a week (gradual changes stick).",
+            ],
+        },
+        {
+            "question": "Will I have high blood pressure forever?",
+            "keywords": ["forever", "reversible", "control", "hypertension"],
+            "signatures": {
+                "behavioral_core": ["GO", "SE"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"SE": 1, "GO": 1, "HL": 0, "PR": 0},
+                "signature_tags": ["HTN", "LongTerm", "Hope", "Maintenance"],
+            },
+            "responses": {
+                "listener": "That’s a common fear—but there’s hope.",
+                "motivator": "You can improve your numbers—many people do!",
+                "director": "Even if it doesn’t go away completely, it can often be controlled. Stick with a plan for 3 months, then reassess with your clinician.",
+                "expert": "Long-term control comes from lifestyle plus medications when needed; the goal is sustained risk reduction, not perfection.",
+            },
+            "security_rules": [
+                "Do not stop medications just because readings improve—confirm a taper plan with your clinician.",
+            ],
+            "action_plans": [
+                "Ask if your HTN is potentially reversible and what would make the biggest difference (shared planning reduces uncertainty).",
+                "Celebrate small BP drops (positive feedback supports persistence).",
+            ],
+        },
+        {
+            "question": "How can I track my blood pressure at home?",
+            "keywords": ["home monitoring", "bp cuff", "technique"],
+            "signatures": {
+                "behavioral_core": ["SY"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "GO": 0, "PR": 0},
+                "signature_tags": ["HTN", "HomeMonitoring", "Technique", "Tracking"],
+            },
+            "responses": {
+                "listener": "It can be overwhelming at first, but you’re not alone.",
+                "motivator": "Tracking gives you control over your progress.",
+                "director": "Take readings morning and evening, seated and rested. Use reminders and log readings with date/time and symptoms.",
+                "expert": "Technique matters: correct cuff size, arm at heart level, avoid caffeine/exercise 30 minutes before, and rest 5 minutes first.",
+            },
+            "security_rules": [
+                "If you get repeated very high readings (especially ≥180/120) or symptoms, seek urgent guidance per your clinician’s plan.",
+            ],
+            "action_plans": [
+                "Set a calendar alert for BP checks 3 days/week (routine improves reliability).",
+                "Bring your cuff to a visit to confirm accuracy (trustworthy data improves decisions).",
+            ],
+        },
+        {
+            "question": "Can stress really affect my blood pressure?",
+            "keywords": ["stress", "bp", "mindfulness", "sleep"],
+            "signatures": {
+                "behavioral_core": ["ST", "SLEEP"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"SE": 1, "PR": 1, "HL": 0, "GO": 0},
+                "signature_tags": ["HTN", "Stress", "Sleep", "MindBody"],
+            },
+            "responses": {
+                "listener": "Yes—and life can be stressful. We get it.",
+                "motivator": "Taking care of your mind supports your heart.",
+                "director": "Create a wind-down routine and try 5 minutes of guided breathing daily. Also watch the stress behaviors (sleep, salty food, alcohol).",
+                "expert": "Stress can raise BP and drive behaviors that raise BP; mind-body strategies can support better control over time.",
+            },
+            "security_rules": [
+                "If anxiety or panic symptoms feel severe or unsafe, seek urgent help or contact a healthcare professional.",
+            ],
+            "action_plans": [
+                "Identify one stressor you can reduce this week (small wins reduce tension).",
+                "Try 5 minutes of paced breathing daily for 7 days (quick nervous-system downshift).",
+            ],
+        },
+        {
+            "question": "What’s a dangerous blood pressure level?",
+            "keywords": ["dangerous", "hypertensive crisis", "180/120"],
+            "signatures": {
+                "behavioral_core": ["HL", "PR"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "SE": 0, "GO": 0},
+                "signature_tags": ["HTN", "Safety", "Escalation", "EmergencyPlan"],
+            },
+            "responses": {
+                "listener": "It’s scary not knowing what’s too high.",
+                "motivator": "Knowing your numbers gives you power—not fear.",
+                "director": "A hypertensive crisis is often defined around 180/120, especially if symptoms are present. Know your plan: recheck, call, or seek urgent care depending on symptoms.",
+                "expert": "Risk rises as BP rises, and symptoms matter. Your clinician can help you set thresholds based on your history and meds.",
+            },
+            "security_rules": [
+                "If BP is ≥180/120 with chest pain, shortness of breath, weakness, vision changes, confusion, or severe headache, seek emergency care.",
+            ],
+            "action_plans": [
+                "Learn BP zones using a chart (recognition supports timely action).",
+                "Program urgent contacts and keep your plan accessible (preparedness reduces delay).",
+            ],
+        },
+        {
+            "question": "Is low blood pressure a problem too?",
+            "keywords": ["low bp", "90/60", "dizzy", "hypotension"],
+            "signatures": {
+                "behavioral_core": ["SY", "HL"],
+                "condition_modifiers": ["HTN", "MEDS"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "PR": 0, "GO": 0},
+                "signature_tags": ["HTN", "Safety", "Symptoms", "MedicationReview"],
+            },
+            "responses": {
+                "listener": "Yes—low BP can make you feel dizzy, tired, or weak.",
+                "motivator": "It’s okay to ask questions if something doesn’t feel right.",
+                "director": "If BP feels too low—especially on meds—log symptoms and timing of doses, and share with your clinician to adjust safely.",
+                "expert": "BP under ~90/60 can be normal for some, but concerning if it causes symptoms; dehydration and meds can contribute.",
+            },
+            "security_rules": [
+                "Seek urgent care if low BP is accompanied by fainting, chest pain, severe shortness of breath, or confusion.",
+            ],
+            "action_plans": [
+                "Note symptoms whenever you take readings (symptom-linked data guides adjustments).",
+                "Track hydration and med timing for a week and review with your clinician (timing often explains patterns).",
+            ],
+        },
+        {
+            "question": "How do I talk to my family about my high blood pressure?",
+            "keywords": ["family", "support", "communication", "history"],
+            "signatures": {
+                "behavioral_core": ["TR", "SE"],
+                "condition_modifiers": ["HTN"],
+                "engagement_drivers": {"TR": 1, "SE": 1, "HL": 0, "GO": 0},
+                "signature_tags": ["HTN", "FamilySupport", "Prevention", "Communication"],
+            },
+            "responses": {
+                "listener": "Talking about your health takes courage.",
+                "motivator": "You might inspire them to check their BP too!",
+                "director": "Use simple language: “I’m working on my BP so I can stay healthy.” Share one goal and invite support.",
+                "expert": "Family history matters—sharing encourages prevention and earlier detection for loved ones too.",
+            },
+            "security_rules": [
+                "If family conversations increase stress significantly, consider bringing a trusted support person to a clinic visit instead.",
+            ],
+            "action_plans": [
+                "Start with one trusted family member (support makes change easier).",
+                "Invite a loved one to join a walk or cooking swap (shared habits improve follow-through).",
+            ],
+        },
+    ],
+},
+
+# -------------------------
+# AF PACK (10) - Atrial Fibrillation
+# -------------------------
+"HTN": {
+"category": "HTN",
+    "title": "Atrial Fibrillation (AFib)",
+    "source_defaults": [
+        _aha_source("Atrial Fibrillation (AFib)", "https://www.heart.org/en/health-topics/atrial-fibrillation"),
+        _aha_source("Stroke Warning Signs (FAST)", "https://www.heart.org/en/health-topics/stroke/warning-signs-of-stroke"),
+        _aha_source("Life’s Essential 8", "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8"),
+        _aha_source("Sleep Apnea and Heart Disease/Stroke", "https://www.heart.org/en/health-topics/sleep-disorders/sleep-apnea-and-heart-disease-stroke"),
+    ],
+    "questions": [
+        {
+            "question": "What exactly is atrial fibrillation?",
+            "keywords": ["afib", "irregular heartbeat", "atria", "ecg"],
+            "signatures": {
+                "behavioral_core": ["HL"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"HL": 1, "SE": 0, "TR": 0, "PR": 0},
+                "signature_tags": ["AF", "Education", "Diagnosis", "ECG"],
+            },
+            "responses": {
+                "listener": "You’re not alone—this diagnosis can feel overwhelming.",
+                "motivator": "You’ve taken an important first step by asking.",
+                "director": "AFib is an irregular rhythm that can raise stroke and heart failure risk. Ask for a clear explanation of your type and your plan.",
+                "expert": "AFib involves disorganized electrical activity in the atria; confirmation and classification help guide treatment.",
+            },
+            "security_rules": [
+                "Seek urgent care for chest pain, fainting, severe shortness of breath, or signs of stroke (face droop, arm weakness, speech difficulty).",
+            ],
+            "action_plans": [
+                "Ask your clinician to explain AFib in plain language (understanding reduces fear and improves adherence).",
+                "Ask what AFib type you have (paroxysmal/persistent/permanent) and what it changes in your plan (type guides strategy).",
+            ],
+        },
+        {
+            "question": "What are my treatment options?",
+            "keywords": ["rate control", "rhythm control", "ablation", "cardioversion"],
+            "signatures": {
+                "behavioral_core": ["HL", "GO"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"HL": 1, "GO": 1, "TR": 0, "SE": 0},
+                "signature_tags": ["AF", "TreatmentOptions", "SharedDecisionMaking"],
+            },
+            "responses": {
+                "listener": "It’s okay to feel unsure—there are several options.",
+                "motivator": "You deserve a plan that fits your life.",
+                "director": "Options include meds (rate/rhythm), cardioversion, ablation, and risk-factor control. Schedule a dedicated planning visit to decide goals.",
+                "expert": "Therapy depends on symptoms, duration, comorbidities, and AFib type—tailoring improves outcomes.",
+            },
+            "security_rules": [
+                "Do not change heart rhythm/heart rate medications without clinician guidance.",
+            ],
+            "action_plans": [
+                "Write your top goals: symptom relief, stroke prevention, or both (goals guide decisions).",
+                "Ask about rhythm vs rate strategy and why it fits you (clarity improves confidence).",
+            ],
+        },
+        {
+            "question": "Do I need a blood thinner?",
+            "keywords": ["anticoagulation", "blood thinner", "stroke risk", "CHA2DS2-VASc"],
+            "signatures": {
+                "behavioral_core": ["HL", "PR"],
+                "condition_modifiers": ["AF", "STROKE_RISK"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "TR": 0, "SE": 0},
+                "signature_tags": ["AF", "Anticoagulation", "StrokePrevention", "Safety"],
+            },
+            "responses": {
+                "listener": "It’s common to be nervous about bleeding risk.",
+                "motivator": "Blood thinners can be powerful protection against stroke.",
+                "director": "Ask for your stroke risk score and how it compares to bleeding risk. Learn what to do if you miss a dose and what interactions to avoid.",
+                "expert": "Guidelines commonly use risk scoring (like CHA₂DS₂-VASc) to decide anticoagulation; the goal is matching therapy to risk.",
+            },
+            "security_rules": [
+                "If you have signs of serious bleeding (vomiting blood, black/tarry stools, severe unexplained bruising) or stroke symptoms, seek emergency care.",
+            ],
+            "action_plans": [
+                "Ask for your stroke risk score and what it means (informed decisions are safer).",
+                "Ask for a “missed dose + bleeding precautions” handout (clear rules reduce errors).",
+            ],
+        },
+        {
+            "question": "Can AFib go away?",
+            "keywords": ["remission", "paroxysmal", "ablation", "risk factor control"],
+            "signatures": {
+                "behavioral_core": ["GO", "HB"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"GO": 1, "SE": 1, "HL": 0, "TR": 0},
+                "signature_tags": ["AF", "Remission", "RiskFactorControl", "SleepApnea"],
+            },
+            "responses": {
+                "listener": "That’s a hopeful question—and a fair one.",
+                "motivator": "Some people do return to normal rhythm with treatment and risk-factor changes.",
+                "director": "Track episodes and triggers. Keep follow-ups for rhythm checks and discuss whether ablation or specific risk-factor plans are appropriate.",
+                "expert": "In some cases, treating drivers like sleep apnea, weight, alcohol exposure, and BP can reduce burden; some achieve remission, especially earlier on.",
+            },
+            "security_rules": [
+                "If AFib symptoms are severe (fainting, chest pain, severe breathlessness), seek urgent evaluation.",
+            ],
+            "action_plans": [
+                "Track episodes/triggers for 2–4 weeks (patterns guide the plan).",
+                "Ask if sleep apnea screening or a weight-risk plan is appropriate (driver control can reduce AFib burden).",
+            ],
+        },
+        {
+            "question": "How does AFib affect my risk of stroke?",
+            "keywords": ["stroke", "risk", "FAST", "prevention"],
+            "signatures": {
+                "behavioral_core": ["HL", "PR"],
+                "condition_modifiers": ["AF", "STROKE_RISK"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "SE": 0, "TR": 0},
+                "signature_tags": ["AF", "StrokeRisk", "FAST", "Anticoagulation"],
+            },
+            "responses": {
+                "listener": "That fear is valid—stroke risk is real, but manageable.",
+                "motivator": "You’re taking charge by focusing on prevention.",
+                "director": "Learn FAST signs of stroke and follow your anticoagulation plan if prescribed. Keep BP, diabetes, and sleep in check too.",
+                "expert": "AFib increases stroke risk; anticoagulation can reduce risk substantially when indicated, and comorbidity control supports prevention.",
+            },
+            "security_rules": [
+                "If you notice FAST symptoms, call emergency services immediately—time matters.",
+            ],
+            "action_plans": [
+                "Learn FAST and teach one family member (recognition saves lives).",
+                "Review your stroke prevention plan at each visit (staying aligned reduces risk).",
+            ],
+        },
+        {
+            "question": "What should I avoid with AFib?",
+            "keywords": ["triggers", "alcohol", "caffeine", "cold medicine", "stress"],
+            "signatures": {
+                "behavioral_core": ["ST", "SLEEP", "NUT"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"SE": 1, "HL": 1, "PR": 0, "GO": 0},
+                "signature_tags": ["AF", "Triggers", "Lifestyle", "Prevention"],
+            },
+            "responses": {
+                "listener": "You’re not alone in wondering what can make it worse.",
+                "motivator": "Small changes can make a big difference.",
+                "director": "Identify triggers (alcohol, too much caffeine, poor sleep, stress, stimulants). Make a list and test one reduction for 2 weeks.",
+                "expert": "Common triggers include alcohol and stimulants; risk-factor control is a core part of AFib management and symptom reduction.",
+            },
+            "security_rules": [
+                "Avoid stimulant-containing cold medications unless your clinician says they’re safe for you; ask a pharmacist if unsure.",
+            ],
+            "action_plans": [
+                "Create a trigger list and track symptoms for 2 weeks (data makes triggers obvious).",
+                "Choose one trigger to reduce this week (small experiments improve control).",
+            ],
+        },
+        {
+            "question": "Can I still exercise?",
+            "keywords": ["exercise", "safe activity", "rehab", "symptoms"],
+            "signatures": {
+                "behavioral_core": ["PA"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"SE": 1, "GO": 1, "PR": 1, "HL": 0},
+                "signature_tags": ["AF", "PhysicalActivity", "CardiacRehab", "Safety"],
+            },
+            "responses": {
+                "listener": "It’s smart to ask—many people worry about this.",
+                "motivator": "Yes—moving your body is part of healing.",
+                "director": "Start with walking or light movement and increase gradually. Ask about cardiac rehab if you want structured monitoring early on.",
+                "expert": "Moderate exercise can improve AFib symptoms and overall cardiovascular health when done safely and progressively.",
+            },
+            "security_rules": [
+                "Stop exercise and seek urgent evaluation for chest pain, fainting, severe shortness of breath, or new neurologic symptoms.",
+            ],
+            "action_plans": [
+                "Tell your clinician what exercise you enjoy (plans stick when they fit you).",
+                "Start with a 10–15 minute walk 3–5 days/week and build (steady progression improves tolerance).",
+            ],
+        },
+        {
+            "question": "Will AFib get worse over time?",
+            "keywords": ["progression", "paroxysmal", "persistent", "risk factors"],
+            "signatures": {
+                "behavioral_core": ["GO", "HL"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"GO": 1, "HL": 1, "SE": 0, "PR": 0},
+                "signature_tags": ["AF", "Progression", "RiskFactorControl", "Monitoring"],
+            },
+            "responses": {
+                "listener": "It’s okay to worry—uncertainty is hard.",
+                "motivator": "Staying proactive makes a big difference.",
+                "director": "Ask which AFib type you have and what would signal progression. Track symptoms and keep follow-ups for rhythm checks.",
+                "expert": "Progression risk is influenced by drivers like age, weight, sleep apnea, hypertension, and diabetes—controlling them can slow worsening.",
+            },
+            "security_rules": [
+                "If episodes become much more frequent or symptoms worsen significantly, contact your clinician promptly.",
+            ],
+            "action_plans": [
+                "Ask for your AFib type and what it predicts (classification guides planning).",
+                "Choose one risk-factor target this month (BP, sleep, weight, alcohol) (driver control can slow progression).",
+            ],
+        },
+        {
+            "question": "Can I travel or fly with AFib?",
+            "keywords": ["travel", "flying", "dehydration", "clots"],
+            "signatures": {
+                "behavioral_core": ["PR", "HB"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"PR": 1, "SE": 1, "HL": 0, "GO": 0},
+                "signature_tags": ["AF", "Travel", "Planning", "Safety"],
+            },
+            "responses": {
+                "listener": "This is a common concern—and you’re wise to ask.",
+                "motivator": "AFib doesn’t have to ground your life.",
+                "director": "Travel is often fine if stable. Pack meds, hydrate, and walk during long trips. Know what symptoms mean you should seek care.",
+                "expert": "Dehydration and long immobility can worsen symptoms and clot risk; movement and hydration help reduce triggers.",
+            },
+            "security_rules": [
+                "If you develop chest pain, severe shortness of breath, fainting, or stroke symptoms while traveling, seek emergency care immediately.",
+            ],
+            "action_plans": [
+                "Talk to your clinician before long trips (pre-planning reduces risk).",
+                "During flights: hydrate and walk/stand regularly (reduces triggers and clot risk).",
+            ],
+        },
+        {
+            "question": "Will I have to live with AFib forever?",
+            "keywords": ["chronic", "long-term", "remission", "management"],
+            "signatures": {
+                "behavioral_core": ["SE", "GO"],
+                "condition_modifiers": ["AF"],
+                "engagement_drivers": {"SE": 1, "GO": 1, "HL": 0, "TR": 0},
+                "signature_tags": ["AF", "LongTerm", "Hope", "Maintenance"],
+            },
+            "responses": {
+                "listener": "It’s okay to wonder—many people do.",
+                "motivator": "You can live well with AFib.",
+                "director": "Some people reach remission, many manage it long-term. The best plan is consistent meds (if prescribed) plus driver control and regular check-ins.",
+                "expert": "AFib is often chronic but can be controlled; early stages may respond strongly to interventions like ablation and risk-factor management in appropriate patients.",
+            },
+            "security_rules": [
+                "If you feel unsafe, faint, or have stroke symptoms, seek emergency care immediately.",
+            ],
+            "action_plans": [
+                "Ask: “What does success look like for me?” (clear expectations reduce anxiety).",
+                "Pick one habit change this month (sleep, alcohol, BP, activity) (small changes can reduce AFib burden).",
+            ],
+        },
+    ],
+},
+
+# -------------------------
+# HF PACK (10) - Heart Failure
+# -------------------------
+"HF": {
+    "category": "HF",
+    "title": "Heart Failure",
+    "source_defaults": [
+        _aha_source("Heart Failure", "https://www.heart.org/en/health-topics/heart-failure"),
+        _aha_source("Warning Signs of Heart Failure", "https://www.heart.org/en/health-topics/heart-failure/warning-signs-of-heart-failure"),
+        _aha_source("Cardiac Rehab", "https://www.heart.org/en/health-topics/cardiac-rehab"),
+        _aha_source("Low-Sodium Eating", "https://www.heart.org/en/healthy-living/healthy-eating/eat-smart/sodium"),
+        _aha_source("Life’s Essential 8", "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8"),
+    ],
+    "questions": [
+        {
+            "question": "What is heart failure and can it be managed?",
+            "keywords": ["heart failure", "managed", "pumping", "diagnosis"],
+            "signatures": {
+                "behavioral_core": ["HL", "SE"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "TR": 0, "PR": 0},
+                "signature_tags": ["HF", "Education", "CarePlan", "Hope"],
+            },
+            "responses": {
+                "listener": "It’s okay to feel nervous. You’re not alone in this.",
+                "motivator": "Many people with heart failure live full, active lives.",
+                "director": "Heart failure means your heart isn’t pumping as well—but treatment helps. Build a care plan with your team and track symptoms.",
+                "expert": "Guidelines support medicines, lifestyle changes, and symptom tracking; early recognition of changes helps prevent hospitalizations.",
+            },
+            "security_rules": [
+                "Seek urgent care for chest pain, severe shortness of breath at rest, fainting, confusion, or blue lips/face.",
+            ],
+            "action_plans": [
+                "Ask your clinician to explain your HF in simple terms (understanding reduces fear).",
+                "Start a simple symptom log (tracking helps detect problems early).",
+            ],
+        },
+        {
+            "question": "How do I know if my heart failure is getting worse?",
+            "keywords": ["worsening", "weight gain", "swelling", "breathing"],
+            "signatures": {
+                "behavioral_core": ["SY", "PR"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"PR": 1, "SE": 1, "HL": 1, "GO": 0},
+                "signature_tags": ["HF", "EarlyWarning", "Weight", "Readmissions"],
+            },
+            "responses": {
+                "listener": "It’s okay to check in with how your body feels.",
+                "motivator": "You’re learning your body’s signals—that’s powerful.",
+                "director": "Track weight daily and watch swelling/breathing. Report sudden gain (often ~2+ lbs overnight or ~5+ in a week) or worsening symptoms per your plan.",
+                "expert": "Daily monitoring (weight, symptoms) helps catch fluid buildup early and reduce hospital visits.",
+            },
+            "security_rules": [
+                "If breathing becomes severely difficult, you cannot lie flat, or you have chest pain, seek emergency care.",
+            ],
+            "action_plans": [
+                "Weigh yourself every morning after the bathroom, before breakfast (consistent timing improves accuracy).",
+                "Use a simple checklist: weight, swelling, breathlessness, fatigue (patterns matter more than single days).",
+            ],
+        },
+        {
+            "question": "What can I eat with heart failure?",
+            "keywords": ["sodium", "diet", "fluids", "labels"],
+            "signatures": {
+                "behavioral_core": ["NUT"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"HL": 1, "SE": 0, "GO": 0, "FI": 0},
+                "signature_tags": ["HF", "Nutrition", "Sodium", "DASH"],
+            },
+            "responses": {
+                "listener": "Eating can feel tricky when you’re told to ‘cut back.’",
+                "motivator": "Your meals can still be flavorful and fulfilling!",
+                "director": "Limit sodium (often ~1,500–2,000 mg/day depending on your plan). Read labels and reduce processed foods. Follow fluid guidance if your clinician gave it.",
+                "expert": "Lower sodium helps reduce fluid retention and symptoms; heart-healthy patterns support long-term outcomes.",
+            },
+            "security_rules": [
+                "If you have kidney disease or are on diuretics, follow clinician guidance on sodium, fluids, and potassium—avoid salt substitutes unless approved.",
+            ],
+            "action_plans": [
+                "Check one label per day for sodium (small steps add up).",
+                "Try one new low-sodium recipe this week (variety supports adherence).",
+            ],
+        },
+        {
+            "question": "How much activity is safe for me?",
+            "keywords": ["activity", "exercise", "safe", "rehab"],
+            "signatures": {
+                "behavioral_core": ["PA", "PR"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"SE": 1, "PR": 1, "GO": 1, "HL": 0},
+                "signature_tags": ["HF", "PhysicalActivity", "Rehab", "Safety"],
+            },
+            "responses": {
+                "listener": "It’s natural to feel cautious.",
+                "motivator": "Even a few steps count—movement is medicine.",
+                "director": "Ask for safe goals and start with short walks (like 5 minutes after meals). Consider cardiac rehab for tailored guidance.",
+                "expert": "Supervised rehab improves quality of life and outcomes; gradual progression helps build stamina safely.",
+            },
+            "security_rules": [
+                "Stop and seek urgent care for chest pain, fainting, severe shortness of breath, or new neurologic symptoms during activity.",
+            ],
+            "action_plans": [
+                "Ask for a referral to rehab or a written walking plan (structure improves safety).",
+                "Use the talk test and symptom checks (prevents overexertion).",
+            ],
+        },
+        {
+            "question": "Will I always feel tired or short of breath?",
+            "keywords": ["fatigue", "shortness of breath", "symptoms", "treatment"],
+            "signatures": {
+                "behavioral_core": ["SE", "SY"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"SE": 1, "HL": 1, "GO": 0, "PR": 0},
+                "signature_tags": ["HF", "Symptoms", "Optimization", "FollowUp"],
+            },
+            "responses": {
+                "listener": "It’s frustrating when energy is low—but you’re doing your best.",
+                "motivator": "Good days will come—keep going.",
+                "director": "Stick to meds, meals, and movement plan. Track fatigue and breathing so your clinician can adjust therapy.",
+                "expert": "Symptoms can improve when therapy is optimized; regular review helps fine-tune your plan.",
+            },
+            "security_rules": [
+                "If you have rapidly worsening breathlessness, chest pain, or fainting, seek urgent evaluation.",
+            ],
+            "action_plans": [
+                "Keep a fatigue + symptom journal for 2 weeks (patterns help clinicians adjust therapy).",
+                "Ask about medication optimization if symptoms persist (guideline-directed therapy changes over time).",
+            ],
+        },
+        {
+            "question": "What medications will I need, and what do they do?",
+            "keywords": ["medications", "beta-blocker", "ACE", "ARNI", "SGLT2", "MRA"],
+            "signatures": {
+                "behavioral_core": ["HL", "SE"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "TR": 0, "GO": 0},
+                "signature_tags": ["HF", "Medications", "GDMT", "Adherence"],
+            },
+            "responses": {
+                "listener": "It’s okay to ask what each pill is for. That’s smart.",
+                "motivator": "Learning your meds is part of owning your care.",
+                "director": "Make a simple med chart: name, time, purpose, and side effects to watch. Review it with your clinician every 3–6 months.",
+                "expert": "Guidelines support key medication classes for many patients; therapy is tailored and may change as your body responds.",
+            },
+            "security_rules": [
+                "Do not stop HF medications without clinician guidance; seek help for severe side effects (fainting, severe dizziness, swelling of face/lips, allergic reactions).",
+            ],
+            "action_plans": [
+                "Bring all meds to your next visit and ask what each one does (clarity improves adherence).",
+                "Review your list every 3–6 months (med needs change with kidney function, BP, and symptoms).",
+            ],
+        },
+        {
+            "question": "Can I travel or go on vacation with heart failure?",
+            "keywords": ["travel", "vacation", "planning", "stability"],
+            "signatures": {
+                "behavioral_core": ["PR", "HB"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"PR": 1, "SE": 1, "HL": 0, "GO": 0},
+                "signature_tags": ["HF", "Travel", "Planning", "Safety"],
+            },
+            "responses": {
+                "listener": "It’s totally okay to want some normalcy.",
+                "motivator": "You can still explore and enjoy—just with preparation.",
+                "director": "Travel is usually safer when symptoms are stable. Pack meds, a weight plan, and emergency contacts. Confirm travel clearance with your clinician.",
+                "expert": "Guidance is individualized based on symptoms and recent labs; extremes (altitude/heat) can strain the heart.",
+            },
+            "security_rules": [
+                "If you develop severe breathing trouble, chest pain, fainting, or confusion while traveling, seek emergency care immediately.",
+            ],
+            "action_plans": [
+                "Talk to your provider about travel plans ahead of time (planning reduces risk).",
+                "Pack meds + a brief health summary and keep them with you (preparedness prevents missed doses).",
+            ],
+        },
+        {
+            "question": "Will I need a device like a defibrillator or pacemaker?",
+            "keywords": ["ICD", "CRT", "device", "ejection fraction"],
+            "signatures": {
+                "behavioral_core": ["HL", "PR"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "SE": 0, "TR": 0},
+                "signature_tags": ["HF", "Devices", "EF", "Reassessment"],
+            },
+            "responses": {
+                "listener": "It’s okay to be nervous about devices. Ask away.",
+                "motivator": "Many people feel safer with a device protecting them.",
+                "director": "Eligibility depends on heart function (often ejection fraction) and symptoms. Ask if you need an updated echo and when reassessment should happen.",
+                "expert": "Guidelines support device therapy for select patients after medical therapy optimization; reassessment is often recommended after months of treatment.",
+            },
+            "security_rules": [
+                "If you have fainting, near-fainting, or suspected arrhythmia symptoms, contact your clinician promptly or seek urgent care.",
+            ],
+            "action_plans": [
+                "Ask if your ejection fraction qualifies you and when it will be rechecked (data drives decisions).",
+                "Discuss pros/cons and recovery expectations (shared decisions reduce anxiety).",
+            ],
+        },
+        {
+            "question": "What should I do during a flare or worsening episode?",
+            "keywords": ["flare", "decompensation", "plan", "when to call"],
+            "signatures": {
+                "behavioral_core": ["PR", "SY"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"PR": 1, "SE": 1, "HL": 1, "GO": 0},
+                "signature_tags": ["HF", "EmergencyPlan", "EarlyAction", "Readmissions"],
+            },
+            "responses": {
+                "listener": "You’re not alone. Flares happen even when you’re doing everything right.",
+                "motivator": "Having a plan makes you powerful—you can respond early.",
+                "director": "Use a “When to Call” checklist: weight gain, swelling, breathlessness, reduced urine, new fatigue. Keep your care team number posted and in your phone.",
+                "expert": "Guidelines emphasize early contact and adjustment of therapy to prevent hospitalization during acute worsening.",
+            },
+            "security_rules": [
+                "Seek emergency care for severe breathlessness at rest, chest pain, fainting, confusion, or blue lips/face.",
+            ],
+            "action_plans": [
+                "Write a ‘When to Call’ checklist and post it at home (removes guesswork).",
+                "Review your emergency plan every 3–6 months (keeps plans current as meds change).",
+            ],
+        },
+        {
+            "question": "How long can I live with heart failure?",
+            "keywords": ["prognosis", "life expectancy", "markers", "follow-up"],
+            "signatures": {
+                "behavioral_core": ["TR", "GO"],
+                "condition_modifiers": ["HF"],
+                "engagement_drivers": {"TR": 1, "GO": 1, "HL": 0, "SE": 0},
+                "signature_tags": ["HF", "Prognosis", "Goals", "Monitoring"],
+            },
+            "responses": {
+                "listener": "It’s okay to think about the future—it means you care.",
+                "motivator": "Many people live for years—what matters is your path and your support.",
+                "director": "Ask your team to track objective markers (echo results, symptoms, exercise tolerance, labs as ordered) and adjust therapy over time.",
+                "expert": "Outcomes improve with adherence to guideline-directed therapy and timely follow-ups; prognosis varies widely by individual factors.",
+            },
+            "security_rules": [
+                "If you notice a sudden, major symptom change (breathing at rest, chest pain, fainting), seek urgent evaluation.",
+            ],
+            "action_plans": [
+                "Set one meaningful long-term goal (purpose supports resilience).",
+                "Schedule regular check-ins to optimize therapy (timely updates keep care effective).",
+            ],
+        },
+    ],
+}
 
     #end of next pack
 }
