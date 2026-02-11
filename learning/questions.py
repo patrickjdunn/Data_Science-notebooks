@@ -289,7 +289,7 @@ def validate_question_bank(
 
 # -----------------------------
 # PACKS: edit these safely
-# (No IDs here. IDs are generated.)
+
 # -----------------------------
 
 def _aha_source(title: str, url: str) -> Dict[str, str]:
@@ -799,8 +799,7 @@ PACKS: Dict[str, Dict[str, Any]] = {
                 "Ask your provider to review your personal CAD risk factors and your last lipid panel.",
                 "Pick one risk factor to target this month (LDL, BP, tobacco, activity, nutrition)."
             ],
-            # optional; if omitted, source_defaults is used
-            # "sources": [...]
+            
         },
 
                 {
@@ -1167,13 +1166,11 @@ PACKS: Dict[str, Dict[str, Any]] = {
     ],
 
     },
-
  
 # -------------------------
 # CKMH PACK (10) - Heart, Kidney, Metabolic Health (CKM/CKMH)
 # -------------------------
      
-
     "CKMH": {
     "category": "CKMH",
     "title": "Heart, Kidney, and Metabolic Health (CKM)",
@@ -1670,8 +1667,8 @@ PACKS: Dict[str, Dict[str, Any]] = {
 # -------------------------
 # AF PACK (10) - Atrial Fibrillation
 # -------------------------
-"HTN": {
-"category": "HTN",
+"AFib": {
+"category": "AFib",
     "title": "Atrial Fibrillation (AFib)",
     "source_defaults": [
         _aha_source("Atrial Fibrillation (AFib)", "https://www.heart.org/en/health-topics/atrial-fibrillation"),
@@ -2887,6 +2884,24 @@ PACKS: Dict[str, Dict[str, Any]] = {
 
     
 }
+
+def validate_pack_keys(packs: Dict[str, Dict[str, Any]]) -> None:
+    seen = set()
+    for key in packs:
+        if key in seen:
+            raise ValueError(f"Duplicate pack key detected: {key}")
+        seen.add(key)
+
+# Run validation at import time
+validate_pack_keys(PACKS)
+
+
+def validate_pack_structure(packs: Dict[str, Dict[str, Any]]) -> None:
+    for name, pack in packs.items():
+        if "questions" not in pack:
+            raise ValueError(f"{name} pack missing 'questions' list.")
+        if not isinstance(pack["questions"], list):
+            raise TypeError(f"{name} pack 'questions' must be a list.")
 
 
 # -----------------------------
