@@ -1168,15 +1168,7 @@ PACKS: Dict[str, Dict[str, Any]] = {
 
     },
 
-    #next pack
-    # ---------------------------------------------------------------------
-# DROP-IN PACKS (CKMH, HTN, AF, HF)
-# Schema matches SLEEP/REHAB/CAD packs:
-# - responses keys are lowercase: listener/motivator/director/expert
-# - engagement_drivers uses -1/0/+1 values
-# - includes signature_tags, security_rules, action_plans for each question
-# ---------------------------------------------------------------------
-
+ 
 # -------------------------
 # CKMH PACK (10) - Heart, Kidney, Metabolic Health (CKM/CKMH)
 # -------------------------
@@ -2166,9 +2158,734 @@ PACKS: Dict[str, Dict[str, Any]] = {
             ],
         },
     ],
+},
+
+   
+"Stroke": {
+    "category": "Stroke",
+    "title": "Stroke Recovery & Prevention",
+    "source_defaults": [
+        _aha_source("Stroke", "https://www.heart.org/en/health-topics/stroke"),
+        _aha_source("Warning Signs of Stroke (FAST)", "https://www.heart.org/en/health-topics/stroke/warning-signs-of-stroke"),
+        _aha_source("Life’s Essential 8", "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8"),
+    ],
+    "questions": [
+        {
+            "question": "What caused my stroke?",
+            "keywords": ["cause", "ischemic", "hemorrhagic", "etiology"],
+            "signatures": {
+                "behavioral_core": ["HL"],
+                "condition_modifiers": ["STROKE"],
+                "engagement_drivers": {"HL": 1, "TR": 0, "SE": 0, "PR": 0, "GO": 0},
+                "signature_tags": ["Stroke", "Etiology", "Education"],
+            },
+            "responses": {
+                "listener": "You’re not alone in wondering why this happened.",
+                "motivator": "Learning the cause helps you regain control.",
+                "director": "Ask your provider to explain what likely caused your stroke and review your imaging and test results together.",
+                "expert": "Most strokes are ischemic (clot-related) and some are hemorrhagic (bleeding). The cause guides prevention and treatment choices.",
+            },
+            "security_rules": [
+                "Any new weakness, facial droop, speech trouble, vision loss, or confusion requires emergency care immediately.",
+            ],
+            "action_plans": [
+                "Request a clear explanation of stroke type and cause in plain language.",
+                "Ask for a copy of your discharge summary/stroke report for your records.",
+            ],
+        },
+        {
+            "question": "Am I at risk of having another stroke?",
+            "keywords": ["recurrence", "risk", "secondary prevention"],
+            "signatures": {
+                "behavioral_core": ["PR"],
+                "condition_modifiers": ["STROKE", "HTN", "AF", "DM"],
+                "engagement_drivers": {"PR": 1, "HL": 1, "SE": 0, "TR": 0, "GO": 0},
+                "signature_tags": ["Stroke", "SecondaryPrevention", "Risk"],
+            },
+            "responses": {
+                "listener": "It’s natural to worry—it means you care about your future.",
+                "motivator": "You’ve already taken the first step—asking the question.",
+                "director": "Follow your prevention plan: take meds as prescribed, track BP, and keep follow-ups for labs and monitoring.",
+                "expert": "Secondary prevention (BP control, cholesterol treatment, AFib management, and medication adherence) is the strongest path to lowering recurrence risk.",
+            },
+            "security_rules": [
+                "Do not stop antiplatelet/anticoagulant medicines without clinician guidance—stopping can raise stroke risk.",
+            ],
+            "action_plans": [
+                "Schedule your next follow-up appointment before you leave the clinic/hospital.",
+                "Track BP and medication adherence for 2 weeks and bring logs to visits.",
+            ],
+        },
+        {
+            "question": "Will I fully recover?",
+            "keywords": ["recovery", "rehab", "neuroplasticity"],
+            "signatures": {
+                "behavioral_core": ["SE", "GO"],
+                "condition_modifiers": ["STROKE"],
+                "engagement_drivers": {"SE": 1, "GO": 1, "HL": 0, "TR": 0, "PR": 0},
+                "signature_tags": ["Stroke", "Recovery", "Rehab"],
+            },
+            "responses": {
+                "listener": "Recovery looks different for everyone—and that’s okay.",
+                "motivator": "With support and effort, many people make amazing recoveries.",
+                "director": "Ask for PT/OT/speech therapy referrals and set one weekly functional goal you can practice daily.",
+                "expert": "Neuroplasticity allows the brain to rewire over time. Repetition + meaningful practice drives improvements.",
+            },
+            "security_rules": [
+                "Sudden worsening weakness, new severe headache, or confusion needs emergency evaluation.",
+            ],
+            "action_plans": [
+                "Pick one daily practice (walking, hand exercises, speech drills) and track minutes.",
+                "Celebrate one small win each week (builds momentum).",
+            ],
+        },
+        {
+            "question": "Can I drive again?",
+            "keywords": ["driving", "independence", "safety evaluation"],
+            "signatures": {
+                "behavioral_core": ["PR", "ACCESS"],
+                "condition_modifiers": ["STROKE"],
+                "engagement_drivers": {"PR": 1, "SE": 0, "HL": 0, "TR": 0, "GO": 0},
+                "signature_tags": ["Stroke", "Driving", "Safety"],
+            },
+            "responses": {
+                "listener": "Wanting to regain independence is totally normal.",
+                "motivator": "Getting back behind the wheel is a goal worth working toward.",
+                "director": "Ask your provider about readiness and request a formal driving assessment if recommended.",
+                "expert": "Driving depends on vision, reaction time, cognition, and motor control. Many places require medical clearance or testing.",
+            },
+            "security_rules": [
+                "Do not drive until you’ve been cleared—unsafe driving can harm you and others.",
+            ],
+            "action_plans": [
+                "Ask: “Am I medically cleared to drive?” and “Do I need a driving evaluation?”",
+                "Work with rehab on the specific skills driving requires (vision scanning, coordination, endurance).",
+            ],
+        },
+        {
+            "question": "Will I ever feel normal again?",
+            "keywords": ["identity", "adjustment", "emotions", "fatigue"],
+            "signatures": {
+                "behavioral_core": ["ST", "SE"],
+                "condition_modifiers": ["STROKE"],
+                "engagement_drivers": {"SE": 1, "TR": 1, "HL": 0, "GO": 0, "PR": 0},
+                "signature_tags": ["Stroke", "EmotionalHealth", "Adjustment"],
+            },
+            "responses": {
+                "listener": "This is one of the most honest and common questions.",
+                "motivator": "You are adapting and growing—even now.",
+                "director": "Talk about emotions and fatigue with your team. Set one personal goal that matters to you and revisit it monthly.",
+                "expert": "Mood changes and fatigue are common after stroke. Support groups, counseling, and rehab can improve quality of life.",
+            },
+            "security_rules": [
+                "If you have thoughts of self-harm or feel unsafe, seek urgent help from emergency services or a crisis line.",
+            ],
+            "action_plans": [
+                "Choose one meaningful goal (family, purpose, hobby) and break it into weekly steps.",
+                "Ask about counseling or a stroke support group (social support improves recovery).",
+            ],
+        },
+        {
+            "question": "How will this affect my memory or thinking?",
+            "keywords": ["cognition", "memory", "attention", "neuropsychology"],
+            "signatures": {
+                "behavioral_core": ["HL", "PR"],
+                "condition_modifiers": ["STROKE"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Stroke", "Cognition", "BrainHealth"],
+            },
+            "responses": {
+                "listener": "It’s okay to notice changes and feel concerned.",
+                "motivator": "Your brain can rebuild new connections.",
+                "director": "Tell your provider what you’re noticing and ask about a neuropsychological assessment if problems persist.",
+                "expert": "Cognitive effects vary by stroke location/severity. Strategies like routines, reminders, and targeted therapy can help.",
+            },
+            "security_rules": [
+                "New sudden confusion, severe headache, or weakness is an emergency—seek care immediately.",
+            ],
+            "action_plans": [
+                "Use a daily routine + reminders (calendar, alarms, checklists).",
+                "Ask for cognitive rehab or neuropsych testing if thinking changes interfere with life.",
+            ],
+        },
+        {
+            "question": "What kind of rehabilitation do I need?",
+            "keywords": ["rehab", "PT", "OT", "speech therapy"],
+            "signatures": {
+                "behavioral_core": ["ACCESS", "GO"],
+                "condition_modifiers": ["STROKE"],
+                "engagement_drivers": {"GO": 1, "SE": 1, "HL": 0, "TR": 0, "PR": 0},
+                "signature_tags": ["Stroke", "Rehab", "Plan"],
+            },
+            "responses": {
+                "listener": "Rehab can feel overwhelming—we’ll take it step by step.",
+                "motivator": "You’re investing in your recovery with every rehab session.",
+                "director": "Ask for a personalized rehab plan (PT/OT/speech) and agree on 2–3 goals that matter to you.",
+                "expert": "Stroke rehab should start once medically stable. Early, consistent therapy improves long-term function.",
+            },
+            "security_rules": [
+                "Report new falls, sudden weakness, or severe headaches promptly.",
+            ],
+            "action_plans": [
+                "Before discharge, ask: “What therapy do I need and how often?”",
+                "Track rehab attendance and home exercises weekly (consistency drives gains).",
+            ],
+        },
+        {
+            "question": "What lifestyle changes should I make?",
+            "keywords": ["lifestyle", "blood pressure", "cholesterol", "exercise", "nutrition"],
+            "signatures": {
+                "behavioral_core": ["HB"],
+                "condition_modifiers": ["STROKE", "HTN", "DM", "CAD"],
+                "engagement_drivers": {"GO": 1, "HL": 1, "SE": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Stroke", "Prevention", "LifeEssential8"],
+            },
+            "responses": {
+                "listener": "Changing habits is hard—but you’re not alone.",
+                "motivator": "You’re strong enough to make changes that protect your brain and heart.",
+                "director": "Focus on the big levers: BP control, cholesterol, diabetes care, movement, and tobacco avoidance.",
+                "expert": "Life’s Essential 8 targets (sleep, diet, activity, weight, BP, cholesterol, glucose, tobacco) are evidence-based drivers of risk reduction.",
+            },
+            "security_rules": [
+                "Any exercise plan after stroke should be cleared by your healthcare team if you have balance issues or heart symptoms.",
+            ],
+            "action_plans": [
+                "Pick ONE change this week (10-min walk, salt reduction, pill routine).",
+                "Use a simple weekly checklist for BP, activity, meds, and sleep.",
+            ],
+        },
+        {
+            "question": "What medications will I need long-term?",
+            "keywords": ["medications", "antiplatelet", "statin", "anticoagulant"],
+            "signatures": {
+                "behavioral_core": ["HL", "PR"],
+                "condition_modifiers": ["STROKE", "AF", "HTN"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Stroke", "Meds", "Adherence"],
+            },
+            "responses": {
+                "listener": "It’s okay to have questions about new medications.",
+                "motivator": "Taking your medications is an act of self-care.",
+                "director": "Keep a current med list and ask what each medication does and when to take it.",
+                "expert": "Common post-stroke meds include antiplatelets, statins, BP meds, and anticoagulants if AFib is present—tailored to your cause/risk.",
+            },
+            "security_rules": [
+                "Do not stop blood thinners or antiplatelets without medical guidance.",
+            ],
+            "action_plans": [
+                "Make a simple med chart: name, dose, time, purpose.",
+                "Set reminders and bring your list to every appointment.",
+            ],
+        },
+        {
+            "question": "How can my family help me?",
+            "keywords": ["caregiver", "support", "family"],
+            "signatures": {
+                "behavioral_core": ["TR", "ACCESS"],
+                "condition_modifiers": ["STROKE"],
+                "engagement_drivers": {"TR": 1, "SE": 1, "HL": 0, "GO": 0, "PR": 0},
+                "signature_tags": ["Stroke", "Caregiver", "Support"],
+            },
+            "responses": {
+                "listener": "Asking for help shows strength, not weakness.",
+                "motivator": "Your recovery is stronger when it’s a team effort.",
+                "director": "Invite a family member to a visit and create a simple shared plan for meds, transportation, and rehab support.",
+                "expert": "Caregiver education and support can improve recovery and reduce readmissions by improving adherence and early symptom recognition.",
+            },
+            "security_rules": [
+                "Caregivers should know FAST stroke warning signs and emergency steps.",
+            ],
+            "action_plans": [
+                "Create a shared calendar for appointments/therapy and a medication checklist.",
+                "Ask your care team for caregiver resources and training materials.",
+            ],
+        },
+    ],
+},
+    
+    "DIABETES": {
+    "category": "DIABETES",
+    "title": "Diabetes Management & Prevention",
+    "source_defaults": [
+        _aha_source("Diabetes", "https://www.heart.org/en/health-topics/diabetes"),
+        _aha_source("Life’s Essential 8", "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8"),
+    ],
+    "questions": [
+        {
+            "question": "What should my blood sugar levels be?",
+            "keywords": ["targets", "glucose", "fasting", "post-meal"],
+            "signatures": {
+                "behavioral_core": ["HL", "SY"],
+                "condition_modifiers": ["DM"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "GO": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "Targets", "Monitoring"],
+            },
+            "responses": {
+                "listener": "It’s normal to feel confused about numbers at first.",
+                "motivator": "Knowing your numbers is a key to taking control.",
+                "director": "Typical targets: fasting 80–130 mg/dL, after meals <180 mg/dL. Ask your team for your personalized range.",
+                "expert": "Targets vary by age, medications, hypoglycemia risk, and comorbidities—individualized goals are safest.",
+            },
+            "security_rules": [
+                "Repeated readings <70 mg/dL or very high readings (e.g., >300 mg/dL) should be reviewed promptly with a clinician.",
+            ],
+            "action_plans": [
+                "Ask for your personal glucose targets and when to check.",
+                "Track readings for 7 days and note meals/activity to find patterns.",
+            ],
+        },
+        {
+            "question": "What foods should I avoid or eat more of?",
+            "keywords": ["diet", "carbs", "fiber", "plate method"],
+            "signatures": {
+                "behavioral_core": ["NUT"],
+                "condition_modifiers": ["DM", "CKM", "CAD"],
+                "engagement_drivers": {"HL": 1, "GO": 0, "SE": 0, "PR": 0, "FI": 0},
+                "signature_tags": ["Diabetes", "Nutrition", "Carbs"],
+            },
+            "responses": {
+                "listener": "You don’t have to give up all your favorite foods.",
+                "motivator": "Every healthy meal is a step toward better control.",
+                "director": "Try the plate method: half non-starchy veggies, quarter protein, quarter carbs. Choose fiber-rich carbs and limit sugary drinks.",
+                "expert": "Fiber-rich patterns (Mediterranean/DASH-style) support glucose and heart health; refined carbs and added sugars increase spikes.",
+            },
+            "security_rules": [
+                "If you use insulin or sulfonylureas, don’t skip meals without guidance—hypoglycemia risk can rise.",
+            ],
+            "action_plans": [
+                "Make one swap this week: sugary drink → water or unsweetened tea.",
+                "Add one fiber target daily (beans, oats, veggies, whole grains).",
+            ],
+        },
+        {
+            "question": "Do I need to check my blood sugar every day?",
+            "keywords": ["monitoring", "frequency", "CGM", "meter"],
+            "signatures": {
+                "behavioral_core": ["HL", "SY"],
+                "condition_modifiers": ["DM"],
+                "engagement_drivers": {"HL": 1, "SE": 0, "PR": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "Monitoring", "Plan"],
+            },
+            "responses": {
+                "listener": "Testing can feel like a hassle—it’s okay to feel that way.",
+                "motivator": "Each check gives you insight into what works.",
+                "director": "Ask your provider what schedule fits your meds and goals. Some people need daily checks; others need less frequent monitoring.",
+                "expert": "Frequency depends on treatment (especially insulin), hypoglycemia risk, and A1c control—match monitoring to clinical need.",
+            },
+            "security_rules": [
+                "If you have frequent lows/highs, contact your clinician—medications may need adjustment.",
+            ],
+            "action_plans": [
+                "Agree on a monitoring schedule with your care team.",
+                "When you test, note context (meal, exercise, stress, sleep).",
+            ],
+        },
+        {
+            "question": "Can I still exercise safely with diabetes?",
+            "keywords": ["exercise", "activity", "safety", "insulin"],
+            "signatures": {
+                "behavioral_core": ["PA", "PR"],
+                "condition_modifiers": ["DM", "CAD", "HTN"],
+                "engagement_drivers": {"SE": 1, "PR": 1, "GO": 0, "HL": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "Exercise", "Safety"],
+            },
+            "responses": {
+                "listener": "Exercise can be intimidating at first—especially if you’ve had a scare.",
+                "motivator": "Moving your body is one of the best things you can do.",
+                "director": "Start with walks after meals. If on insulin, check glucose before/after and carry fast carbs.",
+                "expert": "About 150 minutes/week of moderate activity improves glucose, BP, and weight; combining aerobic + resistance is especially effective.",
+            },
+            "security_rules": [
+                "If you have chest pain, severe shortness of breath, dizziness, or signs of low glucose during exercise, stop and seek help.",
+            ],
+            "action_plans": [
+                "Walk 10 minutes after one meal daily this week.",
+                "Keep a small hypoglycemia kit (glucose tabs/juice) available when active.",
+            ],
+        },
+        {
+            "question": "How often should I get my A1c checked?",
+            "keywords": ["A1c", "labs", "frequency"],
+            "signatures": {
+                "behavioral_core": ["PC", "HL"],
+                "condition_modifiers": ["DM"],
+                "engagement_drivers": {"HL": 1, "GO": 1, "SE": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "A1c", "Monitoring"],
+            },
+            "responses": {
+                "listener": "Blood work can be stressful—I get it.",
+                "motivator": "Knowing your A1c helps you see how far you’ve come.",
+                "director": "Many people check every 3–6 months depending on control. Ask your provider to set a schedule.",
+                "expert": "A1c reflects average glucose over ~2–3 months and helps guide therapy adjustments over time.",
+            },
+            "security_rules": [
+                "If you have frequent hypoglycemia or rapid symptom changes, discuss earlier follow-up with your clinician.",
+            ],
+            "action_plans": [
+                "Put your next A1c date on your calendar today.",
+                "Track your A1c results in a simple log to see trends.",
+            ],
+        },
+        {
+            "question": "What is A1c and why is it important?",
+            "keywords": ["A1c", "average glucose", "complications"],
+            "signatures": {
+                "behavioral_core": ["HL"],
+                "condition_modifiers": ["DM"],
+                "engagement_drivers": {"HL": 1, "SE": 0, "GO": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "A1c", "Education"],
+            },
+            "responses": {
+                "listener": "It’s okay if the term sounds new—it trips up a lot of people at first.",
+                "motivator": "Knowing your A1c gives you power to improve it.",
+                "director": "A1c is your average blood sugar over a few months. Ask what your target is and how to move it safely.",
+                "expert": "A1c is a key marker tied to complication risk; it complements daily checks by showing longer-term control.",
+            },
+            "security_rules": [
+                "Do not change medications solely based on one number—review results with your clinician.",
+            ],
+            "action_plans": [
+                "Ask: “What’s my A1c target and why?”",
+                "Pick one behavior linked to your A1c trend (sleep, movement, nutrition, meds).",
+            ],
+        },
+        {
+            "question": "What should I do if I feel shaky or sweaty?",
+            "keywords": ["hypoglycemia", "low blood sugar", "15-15 rule"],
+            "signatures": {
+                "behavioral_core": ["PR"],
+                "condition_modifiers": ["DM"],
+                "engagement_drivers": {"PR": 1, "HL": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "Hypoglycemia", "Safety"],
+            },
+            "responses": {
+                "listener": "That can feel scary—lots of people experience it.",
+                "motivator": "Learning your body’s signals makes you stronger.",
+                "director": "Check glucose if you can. Treat with 15g fast carbs, recheck in 15 minutes, and repeat if still low.",
+                "expert": "Hypoglycemia is typically <70 mg/dL and needs fast correction; frequent lows mean your plan may need adjustment.",
+            },
+            "security_rules": [
+                "If you pass out, have a seizure, or can’t safely swallow, call emergency services immediately.",
+            ],
+            "action_plans": [
+                "Keep glucose tablets or juice nearby at home/work.",
+                "If lows happen more than occasionally, ask your clinician to review meds and timing.",
+            ],
+        },
+        {
+            "question": "What long-term complications should I watch for?",
+            "keywords": ["complications", "kidney", "eyes", "feet", "heart"],
+            "signatures": {
+                "behavioral_core": ["PC"],
+                "condition_modifiers": ["DM", "CKM", "CAD"],
+                "engagement_drivers": {"PR": 1, "HL": 1, "GO": 0, "SE": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "Complications", "Screening"],
+            },
+            "responses": {
+                "listener": "It’s tough to hear about complications—but you’re asking the right question.",
+                "motivator": "You’re doing the brave work of prevention.",
+                "director": "Schedule yearly eye, foot, and kidney checks, and report new symptoms early.",
+                "expert": "Diabetes increases risks for heart disease, stroke, kidney disease, and nerve damage—screening and multi-factor control reduce harm.",
+            },
+            "security_rules": [
+                "Seek urgent care for chest pain, stroke symptoms, or infected foot wounds.",
+            ],
+            "action_plans": [
+                "Book annual eye and foot exams; confirm kidney labs schedule.",
+                "Use a simple symptom checklist and bring it to visits.",
+            ],
+        },
+        {
+            "question": "Will I always have to take medication?",
+            "keywords": ["medications", "long-term plan", "remission"],
+            "signatures": {
+                "behavioral_core": ["HL", "GO"],
+                "condition_modifiers": ["DM"],
+                "engagement_drivers": {"HL": 1, "GO": 1, "SE": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "Meds", "SharedDecisionMaking"],
+            },
+            "responses": {
+                "listener": "Many people wonder the same thing—it’s a valid concern.",
+                "motivator": "In some cases, people do reduce meds through lifestyle changes—step by step.",
+                "director": "Never stop meds without guidance. Ask what milestones could allow dose reduction and how you’ll monitor safely.",
+                "expert": "Medication needs depend on diabetes type, duration, genetics, and risks. Reassess periodically with your clinician.",
+            },
+            "security_rules": [
+                "Do not stop insulin or prescribed medications abruptly without medical supervision.",
+            ],
+            "action_plans": [
+                "Ask: “What would success look like in 3–6 months?”",
+                "Reevaluate your regimen every 6–12 months (or sooner if lows/highs occur).",
+            ],
+        },
+        {
+            "question": "How can I prevent serious complications?",
+            "keywords": ["prevention", "ABCs", "A1c", "blood pressure", "cholesterol"],
+            "signatures": {
+                "behavioral_core": ["PR"],
+                "condition_modifiers": ["DM", "CAD", "HTN", "CKM"],
+                "engagement_drivers": {"PR": 1, "GO": 1, "HL": 1, "SE": 0, "TR": 0},
+                "signature_tags": ["Diabetes", "Prevention", "ABCs"],
+            },
+            "responses": {
+                "listener": "It’s okay to feel overwhelmed—but you’re not powerless.",
+                "motivator": "You have the power to change your story—one habit at a time.",
+                "director": "Focus on ABCs: A1c, blood pressure, and cholesterol. Add movement, sleep, and tobacco-free living.",
+                "expert": "Multi-factor control can substantially reduce complications. Consistency across behaviors + meds matters most.",
+            },
+            "security_rules": [
+                "If you have severe symptoms (confusion, chest pain, stroke signs, or repeated severe lows), seek urgent care.",
+            ],
+            "action_plans": [
+                "Build a simple tracker for A1c, BP, LDL with dates and targets.",
+                "Choose one habit to stick to this week and review results weekly.",
+            ],
+        },
+    ],
+},
+    
+"WELLNESS": {
+    "category": "WELLNESS",
+    "title": "Whole-Person Wellness & Prevention",
+    "source_defaults": [
+        _aha_source("Healthy Living", "https://www.heart.org/en/healthy-living"),
+        _aha_source("Life’s Essential 8", "https://www.heart.org/en/healthy-living/healthy-lifestyle/lifes-essential-8"),
+    ],
+    "questions": [
+        {
+            "question": "How much water should I drink each day?",
+            "keywords": ["hydration", "water", "fluids"],
+            "signatures": {
+                "behavioral_core": ["HB"],
+                "condition_modifiers": ["WELLNESS"],
+                "engagement_drivers": {"SE": 1, "HL": 1, "GO": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Wellness", "Hydration"],
+            },
+            "responses": {
+                "listener": "How do you feel when you’re hydrated? Your body often gives clues.",
+                "motivator": "Staying hydrated is one of the easiest ways to boost energy and focus.",
+                "director": "Aim for a simple baseline like 6–8 cups/day unless your clinician recommends otherwise, and adjust for heat/exercise.",
+                "expert": "Hydration needs vary by body size, activity, and environment; total intake includes water from foods.",
+            },
+            "security_rules": [
+                "If you have heart failure or kidney disease, follow your clinician’s fluid guidance (do not increase fluids automatically).",
+            ],
+            "action_plans": [
+                "Keep a refillable water bottle nearby and refill it twice daily.",
+                "Use a simple goal (cups/day) for 7 days and note energy/headaches.",
+            ],
+        },
+        {
+            "question": "How much sleep do I need?",
+            "keywords": ["sleep", "rest", "7-9 hours"],
+            "signatures": {
+                "behavioral_core": ["SLEEP"],
+                "condition_modifiers": ["WELLNESS"],
+                "engagement_drivers": {"HL": 1, "SE": 1, "GO": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Wellness", "Sleep"],
+            },
+            "responses": {
+                "listener": "Think about when you feel your best—sleep is often the difference-maker.",
+                "motivator": "Sleep is your superpower. Small improvements add up fast.",
+                "director": "Most adults do best with 7–9 hours. Set a consistent wake time and protect a wind-down routine.",
+                "expert": "Short sleep is linked with higher cardiometabolic risk; sleep is one of AHA’s Life’s Essential 8 metrics.",
+            },
+            "security_rules": [
+                "If you have severe daytime sleepiness, loud snoring, or breathing pauses, ask about sleep apnea evaluation.",
+            ],
+            "action_plans": [
+                "Set a consistent wake time for 7 days.",
+                "Reduce screens 30 minutes before bed and track sleep quality (0–10).",
+            ],
+        },
+        {
+            "question": "What is a normal blood pressure?",
+            "keywords": ["blood pressure", "normal", "120/80"],
+            "signatures": {
+                "behavioral_core": ["HL", "PC"],
+                "condition_modifiers": ["WELLNESS", "HTN"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Wellness", "BloodPressure", "Basics"],
+            },
+            "responses": {
+                "listener": "Knowing your numbers is an act of self-care.",
+                "motivator": "Every healthy choice moves you closer to your goal.",
+                "director": "A common target is <120/80. If you’re consistently ≥130/80, discuss next steps with your clinician.",
+                "expert": "Higher BP increases risk for heart attack, stroke, and kidney disease; trends over time matter more than a single reading.",
+            },
+            "security_rules": [
+                "If BP is extremely high (e.g., ~180/120) with symptoms like chest pain or severe headache, seek urgent care.",
+            ],
+            "action_plans": [
+                "Check BP twice weekly at the same time and log results.",
+                "Bring readings to your next appointment for trend review.",
+            ],
+        },
+        {
+            "question": "How can I lose weight in a healthy way?",
+            "keywords": ["weight loss", "calorie deficit", "habits"],
+            "signatures": {
+                "behavioral_core": ["HB", "GO"],
+                "condition_modifiers": ["WELLNESS", "CKM"],
+                "engagement_drivers": {"GO": 1, "SE": 1, "HL": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Wellness", "Weight", "Habits"],
+            },
+            "responses": {
+                "listener": "What’s worked for you in the past? You’re not alone in this.",
+                "motivator": "Small, consistent changes lead to lasting results—progress over perfection.",
+                "director": "Aim for a modest calorie deficit, balanced meals, and ≥150 minutes/week of activity. Track and adjust weekly.",
+                "expert": "Evidence supports multi-component approaches: nutrition + activity + behavior strategies; resistance training helps preserve lean mass.",
+            },
+            "security_rules": [
+                "Avoid extreme diets or rapid weight-loss products; discuss safe targets if you have chronic conditions.",
+            ],
+            "action_plans": [
+                "Choose one lever this week: reduce sugary drinks or add 10 minutes walking daily.",
+                "Track weight weekly (not daily) and focus on trend lines.",
+            ],
+        },
+        {
+            "question": "What are the symptoms of a heart attack?",
+            "keywords": ["heart attack", "chest pain", "warning signs"],
+            "signatures": {
+                "behavioral_core": ["PR"],
+                "condition_modifiers": ["WELLNESS", "CAD"],
+                "engagement_drivers": {"PR": 1, "HL": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Wellness", "HeartAttack", "Emergency"],
+            },
+            "responses": {
+                "listener": "If something doesn’t feel right, it’s okay to seek help right away.",
+                "motivator": "Recognizing signs early could save your life—share what you learn with others too.",
+                "director": "Call 911 for chest pressure/pain, shortness of breath, sweating, nausea, or jaw/back pain—don’t drive yourself.",
+                "expert": "Heart attacks can present with typical or atypical symptoms; immediate emergency evaluation improves outcomes.",
+            },
+            "security_rules": [
+                "Do not wait for symptoms to pass—call emergency services for suspected heart attack symptoms.",
+            ],
+            "action_plans": [
+                "Save emergency numbers and share a plan with family.",
+                "Learn the warning signs and review them twice a year.",
+            ],
+        },
+        {
+            "question": "How can I lower my cholesterol naturally?",
+            "keywords": ["cholesterol", "LDL", "fiber", "diet", "exercise"],
+            "signatures": {
+                "behavioral_core": ["NUT", "PA"],
+                "condition_modifiers": ["WELLNESS", "CAD"],
+                "engagement_drivers": {"GO": 0, "HL": 1, "SE": 0, "PR": 0, "TR": 0},
+                "signature_tags": ["Wellness", "Cholesterol", "LDL"],
+            },
+            "responses": {
+                "listener": "It’s great you’re asking—small shifts can make a big difference.",
+                "motivator": "Every healthy bite and step helps—keep going.",
+                "director": "Increase soluble fiber, reduce saturated fat, avoid trans fats, and build regular aerobic activity. Recheck labs in 3–6 months.",
+                "expert": "LDL reduction correlates with lower CVD risk; dietary patterns and exercise help, and medications may still be needed for high-risk patients.",
+            },
+            "security_rules": [
+                "Do not stop statins or prescribed meds without clinician guidance.",
+            ],
+            "action_plans": [
+                "Add one fiber-rich food daily (oats, beans, fruit, veggies).",
+                "Schedule a lipid panel follow-up date and track progress.",
+            ],
+        },
+        {
+            "question": "When should I get screened for cancer?",
+            "keywords": ["screening", "cancer", "prevention"],
+            "signatures": {
+                "behavioral_core": ["PC"],
+                "condition_modifiers": ["WELLNESS"],
+                "engagement_drivers": {"PR": 1, "HL": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Wellness", "Screening", "Prevention"],
+            },
+            "responses": {
+                "listener": "Screenings are about peace of mind—you’re doing the right thing by asking.",
+                "motivator": "Prevention is powerful. Catching things early changes outcomes.",
+                "director": "Ask your clinician which screenings you need based on age, sex, and family history, and schedule the next one.",
+                "expert": "Screening intervals vary by risk; shared decisions based on guidelines help avoid missed prevention opportunities.",
+            },
+            "security_rules": [
+                "New alarming symptoms (unexplained bleeding, rapid weight loss) should be evaluated promptly—don’t wait for routine screening.",
+            ],
+            "action_plans": [
+                "Ask: “Which screenings am I due for this year?”",
+                "Create a preventive care checklist with dates (annual review).",
+            ],
+        },
+        {
+            "question": "How do I prevent type 2 diabetes?",
+            "keywords": ["prediabetes", "prevention", "lifestyle"],
+            "signatures": {
+                "behavioral_core": ["PR", "HB"],
+                "condition_modifiers": ["WELLNESS", "DM"],
+                "engagement_drivers": {"GO": 1, "SE": 1, "HL": 1, "PR": 1, "TR": 0},
+                "signature_tags": ["Wellness", "DiabetesPrevention"],
+            },
+            "responses": {
+                "listener": "It’s smart to ask early—prevention works best before problems build.",
+                "motivator": "You’re in control. Small daily choices can prevent or delay diabetes.",
+                "director": "Aim for 150 minutes/week activity, reduce sugary drinks, and consider a 5–7% weight loss goal if advised.",
+                "expert": "Lifestyle intervention is strongly supported; screening with A1c or fasting glucose is appropriate if risk factors are present.",
+            },
+            "security_rules": [
+                "If you already have symptoms of high glucose (excess thirst/urination, blurry vision), seek clinical evaluation.",
+            ],
+            "action_plans": [
+                "Walk 10 minutes after dinner 5 days this week.",
+                "Swap sugary drinks for water or unsweetened beverages.",
+            ],
+        },
+        {
+            "question": "Is it safe to take vitamins or supplements?",
+            "keywords": ["supplements", "vitamins", "safety", "interactions"],
+            "signatures": {
+                "behavioral_core": ["HL", "PR"],
+                "condition_modifiers": ["WELLNESS"],
+                "engagement_drivers": {"HL": 1, "PR": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Wellness", "Supplements", "Safety"],
+            },
+            "responses": {
+                "listener": "It’s good you’re asking—wanting clarity is smart.",
+                "motivator": "Being informed is a powerful health habit.",
+                "director": "Only take supplements if medically indicated; choose reputable brands and tell your clinician what you take.",
+                "expert": "Evidence varies widely; supplements can interact with medications (especially blood thinners). Testing for deficiency is often better than guessing.",
+            },
+            "security_rules": [
+                "Avoid mega-doses and avoid starting supplements if you’re on anticoagulants without clinician review (interaction risk).",
+            ],
+            "action_plans": [
+                "Make a list of all supplements/OTC meds and bring it to your next visit.",
+                "Ask if lab testing for deficiency is appropriate before supplementing.",
+            ],
+        },
+        {
+            "question": "How often should I get a physical check-up?",
+            "keywords": ["checkup", "annual visit", "prevention"],
+            "signatures": {
+                "behavioral_core": ["PC"],
+                "condition_modifiers": ["WELLNESS"],
+                "engagement_drivers": {"PR": 1, "HL": 1, "SE": 0, "GO": 0, "TR": 0},
+                "signature_tags": ["Wellness", "PrimaryCare", "Prevention"],
+            },
+            "responses": {
+                "listener": "Your annual visit is a chance to check in—body and mind.",
+                "motivator": "Staying ahead of issues is a form of self-respect and strength.",
+                "director": "Schedule at least yearly if you have chronic conditions; otherwise follow your clinician’s recommended interval.",
+                "expert": "Routine care typically includes BP, lipids, glucose screening, immunizations, and preventive counseling tailored to age and risk.",
+            },
+            "security_rules": [
+                "Do not delay evaluation for urgent symptoms—acute issues should be addressed immediately, not at the next routine physical.",
+            ],
+            "action_plans": [
+                "Schedule your next check-up now (or set a reminder 11 months out).",
+                "Bring a short agenda: top concerns, meds, vitals logs, screenings due.",
+            ],
+        },
+    ],
 }
 
-    #end of next pack
+    
 }
 
 
